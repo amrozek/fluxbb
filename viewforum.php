@@ -122,7 +122,7 @@ require PUN_ROOT.'header.php';
 	<h2><span><?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></span></h2>
 	<div class="box">
 		<div class="inbox">
-			<table>
+			<table cellspacing="0">
 			<thead>
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Topic'] ?></th>
@@ -141,8 +141,11 @@ $result = $db->query('SELECT id FROM '.$db->prefix.'topics WHERE forum_id='.$id.
 if ($db->num_rows($result))
 {
 	$topic_ids = array();
-	for ($i = 0; $cur_topic_id = $db->result($result, $i); $i++)
+	for ($i = 0;$cur_topic_id = $db->result($result, $i);$i++)
 		$topic_ids[] = $cur_topic_id;
+
+	if (empty($topic_ids))
+		error('The topic table and forum table seem to be out of sync!', __FILE__, __LINE__);
 
 	// Fetch list of topics to display on this page
 	if ($pun_user['is_guest'] || $pun_config['o_show_dot'] == '0')
@@ -155,6 +158,16 @@ if ($db->num_rows($result))
 		// With "the dot"
 		$sql = 'SELECT p.poster_id AS has_posted, t.id, t.subject, t.poster, t.posted, t.last_post, t.last_post_id, t.last_poster, t.num_views, t.num_replies, t.closed, t.sticky, t.moved_to FROM '.$db->prefix.'topics AS t LEFT JOIN '.$db->prefix.'posts AS p ON t.id=p.topic_id AND p.poster_id='.$pun_user['id'].' WHERE t.id IN('.implode(',', $topic_ids).') GROUP BY t.id'.($db_type == 'pgsql' ? ', t.subject, t.poster, t.posted, t.last_post, t.last_post_id, t.last_poster, t.num_views, t.num_replies, t.closed, t.sticky, t.moved_to, p.poster_id' : '').' ORDER BY t.sticky DESC, t.'.$sort_by.', t.id DESC';
 	}
+	
+	// colorize groups
+	if ($pun_user['is_guest'] || $pun_config['o_show_dot'] == '0')
+		$sql = 'SELECT u.id AS uid, u.group_id, up.id AS up_id, up.group_id AS up_group_id, t.id, t.poster, t.subject, t.posted, t.last_post, t.last_post_id, t.last_poster, t.num_views, t.num_replies, t.closed, t.sticky, t.moved_to FROM '.$db->prefix.'topics AS t LEFT JOIN '.$db->prefix.'users AS u ON (t.last_poster=u.username) LEFT JOIN '.$db->prefix.'users AS up ON (t.poster=up.username) WHERE t.forum_id='.$id.' ORDER BY t.sticky DESC, '.(($cur_forum['sort_by'] == '1') ? 't.posted' : 't.last_post').' DESC LIMIT '.$start_from.', '.$pun_user['disp_topics'];
+	else
+	{
+		$sql = str_replace('SELECT', 'SELECT u.id AS uid, u.group_id, up.id AS up_id, up.group_id AS up_group_id, ', $sql);
+		$sql = str_replace('WHERE', ' LEFT JOIN '.$db->prefix.'users AS u ON (t.last_poster=u.username) LEFT JOIN '.$db->prefix.'users AS up ON (t.poster=up.username) WHERE', $sql);
+	}
+	//colorize groups
 
 	$result = $db->query($sql) or error('Unable to fetch topic list', __FILE__, __LINE__, $db->error());
 
@@ -204,6 +217,27 @@ if ($db->num_rows($result))
 		}
 		else
 			$subject_new_posts = null;
+			
+		// colorize groups
+		
+		if (isset($cur_topic['up_group_id'])) // user
+			$col_group = colorize_group($cur_topic['poster'], $cur_topic['up_group_id'], $cur_topic['up_id']);
+		else // guest
+			$col_group = colorize_group($cur_topic['poster'], PUN_GUEST);
+
+		$subject = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $subject);
+
+		if ($cur_topic['last_post'] != '')
+		{
+			if (isset($cur_topic['group_id'])) // user
+				$col_group = colorize_group($cur_topic['last_poster'], $cur_topic['group_id'], $cur_topic['uid']);
+			else // guest
+				$col_group = colorize_group($cur_topic['last_poster'], PUN_GUEST);
+
+			$last_post = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['last_poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $last_post);
+		}
+		
+		// colorize groups
 
 		// Insert the status text before the subject
 		$subject = implode(' ', $status_text).' '.$subject;

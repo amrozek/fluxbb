@@ -74,6 +74,9 @@ $lang_common = array(
 'Next'								=>	'Next',
 'Spacer'							=>	'…', // Ellipsis for paginate
 
+// Spoiler mod
+'Hidden text' 						=> 'Hidden text',
+
 // Title
 'Title'								=>	'Title',
 'Member'							=>	'Member', // Default title
@@ -91,7 +94,7 @@ $lang_common = array(
 'BBCode error tag not allowed'		=>	'You are not allowed to use [%s] tags',
 'BBCode error tag url not allowed'	=>	'You are not allowed to post links',
 'BBCode code problem'				=>	'There is a problem with your [code] tags',
-'BBCode list size error'			=>	'Your list was too long to parse, please make it smaller!',
+'BBCode list size error'			=>	'Your list was too long to parse. Please make it smaller!',
 
 // Stuff for the navigator (top of every page)
 'Index'								=>	'Index',
@@ -124,7 +127,6 @@ $lang_common = array(
 'Jump to'							=>	'Jump to',
 'Go'								=>	' Go ', // Submit button in forum jump
 'Moderate topic'					=>	'Moderate topic',
-'All'					=>	'All',
 'Move topic'						=>	'Move topic',
 'Open topic'						=>	'Open topic',
 'Close topic'						=>	'Close topic',

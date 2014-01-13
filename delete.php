@@ -30,6 +30,7 @@ if ($pun_config['o_censoring'] == '1')
 
 // Sort out who the moderators are and if we are currently a moderator (or an admin)
 $mods_array = ($cur_post['moderators'] != '') ? unserialize($cur_post['moderators']) : array();
+
 $is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_moderator'] == '1' && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
 
 $is_topic_post = ($id == $cur_post['first_post_id']) ? true : false;
@@ -42,17 +43,14 @@ if (($pun_user['g_delete_posts'] == '0' ||
 	!$is_admmod)
 	message($lang_common['No permission'], false, '403 Forbidden');
 
-if ($is_admmod && $pun_user['g_id'] != PUN_ADMIN && in_array($cur_post['poster_id'], get_admin_ids()))
-	message($lang_common['No permission'], false, '403 Forbidden');
-
 // Load the delete.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/delete.php';
 
 
 if (isset($_POST['delete']))
 {
-	// Make sure they got here from the site
-	confirm_referrer('delete.php');
+	if ($is_admmod)
+		confirm_referrer('delete.php');
 
 	require PUN_ROOT.'include/search_idx.php';
 

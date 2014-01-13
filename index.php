@@ -45,8 +45,8 @@ define('PUN_ALLOW_INDEX', 1);
 define('PUN_ACTIVE_PAGE', 'index');
 require PUN_ROOT.'header.php';
 
-// Print the categories and forums
-$result = $db->query('SELECT c.id AS cid, c.cat_name, f.id AS fid, f.forum_name, f.forum_desc, f.redirect_url, f.moderators, f.num_topics, f.num_posts, f.last_post, f.last_post_id, f.last_poster FROM '.$db->prefix.'categories AS c INNER JOIN '.$db->prefix.'forums AS f ON c.id=f.cat_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$pun_user['g_id'].') WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY c.disp_position, c.id, f.disp_position', true) or error('Unable to fetch category/forum list', __FILE__, __LINE__, $db->error());
+// Print the categories and forums // refer to readme for colorize groups if installing last topic
+$result = $db->query('SELECT u.group_id, u.id AS uid, c.id AS cid, c.cat_name, f.id AS fid, f.forum_name, f.forum_desc, f.redirect_url, f.moderators, f.num_topics, f.num_posts, f.last_post, f.last_post_id, f.last_poster FROM '.$db->prefix.'categories AS c INNER JOIN '.$db->prefix.'forums AS f ON c.id=f.cat_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$pun_user['g_id'].') LEFT JOIN '.$db->prefix.'users AS u ON (f.last_poster=u.username) WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY c.disp_position, c.id, f.disp_position', true) or error('Unable to fetch category/forum list', __FILE__, __LINE__, $db->error());
 
 $cur_category = 0;
 $cat_count = 0;
@@ -68,7 +68,7 @@ while ($cur_forum = $db->fetch_assoc($result))
 	<h2><span><?php echo pun_htmlspecialchars($cur_forum['cat_name']) ?></span></h2>
 	<div class="box">
 		<div class="inbox">
-			<table>
+			<table cellspacing="0">
 			<thead>
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Forum'] ?></th>
@@ -131,21 +131,44 @@ while ($cur_forum = $db->fetch_assoc($result))
 	else
 		$last_post = $lang_common['Never'];
 
+	if ($cur_forum['last_post'] != '')
+	{
+		if (isset($cur_forum['group_id'])) // user
+			$col_group = colorize_group($cur_forum['last_poster'], $cur_forum['group_id'], $cur_forum['uid']);
+		else // guest
+			$col_group = colorize_group($cur_forum['last_poster'], PUN_GUEST);
+
+		$last_post = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_forum['last_poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $last_post);
+	}
+
+	// modified by colorize groups
 	if ($cur_forum['moderators'] != '')
 	{
 		$mods_array = unserialize($cur_forum['moderators']);
-		$moderators = array();
-
-		foreach ($mods_array as $mod_username => $mod_id)
+		$moderator_groups = array();
+		if (isset($mods_array['groups']))
 		{
-			if ($pun_user['g_view_users'] == '1')
-				$moderators[] = '<a href="profile.php?id='.$mod_id.'">'.pun_htmlspecialchars($mod_username).'</a>';
-			else
-				$moderators[] = pun_htmlspecialchars($mod_username);
+			$moderator_groups = $mods_array['groups'];
+			unset($mods_array['groups']);
 		}
 
-		$moderators = "\t\t\t\t\t\t\t\t".'<p class="modlist">(<em>'.$lang_common['Moderated by'].'</em> '.implode(', ', $moderators).')</p>'."\n";
-	}
+		if (count($mods_array) > 0)
+		{
+			$moderators = array();
+
+			foreach ($mods_array as $mod_username => $mod_id)
+			{
+				if (isset($moderator_groups[$mod_id]))
+					$moderators[] = colorize_group($mod_username, $moderator_groups[$mod_id], $mod_id);
+				elseif ($pun_user['g_view_users'] == '1')
+					$moderators[] = '<a href="profile.php?id='.$mod_id.'">'.pun_htmlspecialchars($mod_username).'</a>';
+				else
+					$moderators[] = pun_htmlspecialchars($mod_username);
+			}
+
+			$moderators = "\t\t\t\t\t\t\t\t".'<p class="modlist">(<em>'.$lang_common['Moderated by'].'</em> '.implode(', ', $moderators).')</p>'."\n";
+		}
+	} // modified by colorize groups
 
 ?>
 				<tr class="<?php echo $item_status ?>">
@@ -185,13 +208,16 @@ if (!defined('PUN_USERS_INFO_LOADED'))
 }
 
 $result = $db->query('SELECT SUM(num_topics), SUM(num_posts) FROM '.$db->prefix.'forums') or error('Unable to fetch topic/post count', __FILE__, __LINE__, $db->error());
-list($stats['total_topics'], $stats['total_posts']) = array_map('intval', $db->fetch_row($result));
+list($stats['total_topics'], $stats['total_posts']) = $db->fetch_row($result);
 
 if ($pun_user['g_view_users'] == '1')
 	$stats['newest_user'] = '<a href="profile.php?id='.$stats['last_user']['id'].'">'.pun_htmlspecialchars($stats['last_user']['username']).'</a>';
 else
 	$stats['newest_user'] = pun_htmlspecialchars($stats['last_user']['username']);
+	// added by colorize groups
+	$stats['newest_user'] = colorize_group($stats['last_user']['username'], $stats['last_user']['group_id'], $stats['last_user']['id']);
 
+	
 if (!empty($forum_actions))
 {
 
@@ -226,7 +252,8 @@ if ($pun_config['o_users_online'] == '1')
 	// Fetch users online info and generate strings for output
 	$num_guests = 0;
 	$users = array();
-	$result = $db->query('SELECT user_id, ident FROM '.$db->prefix.'online WHERE idle=0 ORDER BY ident', true) or error('Unable to fetch online list', __FILE__, __LINE__, $db->error());
+	// modified by colorize groups
+	$result = $db->query('SELECT user_id, ident, u.group_id FROM '.$db->prefix.'online LEFT JOIN '.$db->prefix.'users AS u ON (ident=u.username) WHERE idle=0 ORDER BY ident', true) or error('Unable to fetch online list', __FILE__, __LINE__, $db->error());
 
 	while ($pun_user_online = $db->fetch_assoc($result))
 	{
@@ -236,11 +263,14 @@ if ($pun_config['o_users_online'] == '1')
 				$users[] = "\n\t\t\t\t".'<dd><a href="profile.php?id='.$pun_user_online['user_id'].'">'.pun_htmlspecialchars($pun_user_online['ident']).'</a>';
 			else
 				$users[] = "\n\t\t\t\t".'<dd>'.pun_htmlspecialchars($pun_user_online['ident']);
+		
+			// colorize groups
+			$users[count($users) - 1] = str_replace('">'.pun_htmlspecialchars($pun_user_online['ident']).'</a>', '">'.colorize_group($pun_user_online['ident'], $pun_user_online['group_id']).'</a>', $users[count($users) - 1]);
+			//colorize groups
 		}
 		else
 			++$num_guests;
 	}
-
 	$num_users = count($users);
 	echo "\t\t\t\t".'<dd><span>'.sprintf($lang_index['Users online'], '<strong>'.forum_number_format($num_users).'</strong>').'</span></dd>'."\n\t\t\t\t".'<dd><span>'.sprintf($lang_index['Guests online'], '<strong>'.forum_number_format($num_guests).'</strong>').'</span></dd>'."\n\t\t\t".'</dl>'."\n";
 
@@ -250,6 +280,24 @@ if ($pun_config['o_users_online'] == '1')
 	else
 		echo "\t\t\t".'<div class="clearer"></div>'."\n";
 
+	//colorize groups	
+		$groups = array();
+			foreach ($pun_colorize_groups['groups'] as $g_id => $g_title)
+			{
+				if (!in_array($g_id, array(PUN_GUEST, PUN_MEMBER)))
+				{
+					$cur_group = colorize_group($g_title, $g_id);
+					if ($pun_user['g_view_users'] == 1)
+					$cur_group = '<a href="userlist.php?show_group='.$g_id.'">'.$cur_group.'</a>';
+
+					$groups[] = "\n\t\t\t\t".'<dd>'.$cur_group.'</dd>';
+				}
+			}
+	
+	if (count($groups) > 0)
+		echo "\t\t\t".'<dl id="onlinelist" class="clearb">'."\n\t\t\t\t".'<dt><strong>'.$lang_colorize_groups['Legend'].': </strong></dt>'.implode(', ', $groups)."\n\t\t\t".'</dl>'."\n"; 
+	// colorize groups
+		
 }
 else
 	echo "\t\t\t".'</dl>'."\n\t\t\t".'<div class="clearer"></div>'."\n";

@@ -1,0 +1,2061 @@
+
+/*****************************************************************
+1. INITIAL SETTINGS
+*****************************************************************/
+
+/* Limited Reset
+----------------------------------------------------------------*/
+
+#brdmain, #brdwelcome{
+	margin: 0px 40px 0px 40px;
+}
+
+#copyright {
+  clear: both;
+  text-align: right;
+  z-index: 2;
+ }
+ 
+ #copyright p {
+	font-size: 9px;
+	padding: 0px;
+	color: #CFBFF3;
+}
+
+.rowodd {
+	background: #F2EDFB;
+}
+
+.roweven {
+	background: #F4F0FB;
+}
+input[type=submit], input[type=button], select {
+	-moz-box-shadow:inset 0px 0px 0px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 0px 0px 0px #ffffff;
+	box-shadow:inset 0px 0px 0px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #f6f6f6) );
+	background:-moz-linear-gradient( center top, #ffffff 5%, #f6f6f6 100% );
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f6f6f6');
+	background-color:#ffffff;
+	-moz-border-radius:6px;
+	-webkit-border-radius:6px;
+	border-radius:6px;
+	border:1px solid #dcdcdc;
+	display:inline-block;
+	color:#666666;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:6px 20px;
+	text-decoration:none;
+	text-shadow:1px 1px 0px #ffffff;
+	zoom: 1;
+}
+
+input[type=submit]:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f6f6f6), color-stop(1, #ffffff) );
+	background:-moz-linear-gradient( center top, #f6f6f6 5%, #ffffff 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6f6f6', endColorstr='#ffffff');
+	background-color:#f6f6f6;
+	zoom: 1;
+}
+input[type=submit]:active {
+	position:relative;
+	top:1px;
+}
+
+#logo{
+	float: left;
+	background-image: url('Spyro_Default/logotest2.png');
+	background-repeat: no-repeat;
+	background-size: 207px 175px;
+	height: 175px;
+	width: 207px;
+}
+
+#brdfooter {
+	color: #fff;
+	/*background-image: -webkit-radial-gradient(#351963, #1D0840);
+	background-image: -moz-radial-gradient(#351963, #1D0840);
+	background-image: -o-linear-gradient(#351963, #1D0840);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#351963', endColorstr='#1D0840');
+	background-color: #351963;
+	zoom: 1;*/
+/* IE10 Consumer Preview */ 
+background-image: -ms-linear-gradient(top, #351963 0%, #734EB1 100%);
+
+/* Mozilla Firefox */ 
+background-image: -moz-linear-gradient(top, #351963 0%, #734EB1 100%);
+
+/* Opera */ 
+background-image: -o-linear-gradient(top, #351963 0%, #734EB1 100%);
+
+/* Webkit (Safari/Chrome 10) */ 
+background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #351963), color-stop(1, #734EB1));
+
+/* Webkit (Chrome 11+) */ 
+background-image: -webkit-linear-gradient(top, #351963 0%, #734EB1 100%);
+
+/* W3C Markup, IE10 Release Preview */ 
+background-image: linear-gradient(to bottom, #351963 0%, #734EB1 100%);
+} 
+
+
+
+html, body, .pun table, .pun div, .pun form, .pun p, .pun h1, .pun h2, .pun h3, .pun h4, .pun h5, .pun pre, .pun blockquote,
+.pun ul, .pun ol, .pun li, .pun dl, /*.pun dt, commented out for username post dts*/ .pun dd, .pun th, .pun td, .pun fieldset, .pun legend .pun img,
+.pun abbr, .pun cite, #brdfooter {
+	border: 0;
+	font-style: normal;
+	font-weight: normal;
+	margin: 0;
+	padding: 0;
+}
+
+.pun ul, .pun ol {
+	list-style: none;
+}
+
+.pun select {
+	padding-bottom: 1px;
+	padding-top: 1px;
+	padding-right: 1px;
+}
+
+/* Content Defaults
+----------------------------------------------------------------*/
+
+.pun {
+	font: 81.25%/1.462em Arial, Helvetica, sans-serif;
+}
+
+.pun table, .pun td, .pun th, .pun input, .pun select, .pun optgroup, .pun textarea, .pun legend {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 1em;
+}
+
+.pun pre, .pun code {
+	font-family: consolas, monaco, "bitstream vera sans mono", "courier new", courier, monospace;
+	font-size: 1em;
+}
+
+.pun pre code {
+	font-size: 1em;
+}
+
+.pun table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border: 0;
+	empty-cells: show;
+	width: 100%;
+}
+
+.pun h1 {
+	font:2.154em/1em "Trebuchet MS", Arial, Helvetica, sans-serif;
+	padding: 7px 0;
+}
+
+.pun h2, .pun .hd h2 {
+	font: 1.462em/1em "Trebuchet MS", Arial, Helvetica, sans-serif;
+	padding: 7px 0;
+}
+
+.pun h3 {
+	font-size: 1.154em;
+	line-height: 1.267em;
+	padding: 7px 0;
+}
+
+.pun h4 {
+	font-size: 1.077em;
+	font-weight: bold;
+	padding: 7px 0;
+}
+
+.pun h5, .pun h6 {
+	font-size: 1em;
+	font-weight: bold;
+	padding: 7px 0;
+}
+
+.pun p, .pun ul, .pun ol, .pun dl, .pun th, .pun td, .pun legend {
+	padding: 7px 0;
+}
+
+.pun strong, .pun th, .pun span.warntext, .pun p.warntext {
+	font-weight: bold;
+}
+
+.pun em {
+	font-style: italic;
+}
+
+.pun a, .pun a:link, .pun a:visited {
+	text-decoration: none;
+}
+
+.pun a:hover, .pun a:active, .pun a:focus {
+	text-decoration: underline;
+}
+
+.pun .actions span {
+	padding-left: 16px;
+	padding-right: 8px;
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+	display: inline-block;
+	line-height: normal;
+}
+
+/* Hidden Elements
+----------------------------------------------------------------*/
+
+#brdfooter h2, #brdstats h2, #debug h2, #brdstats .conl dt, #brdstats .conr dt, #modcontrols dt,
+#searchlinks dt, div.postright h3, .pun .subscribelink span, #announce .hd, #reportform h2, #punmoderate #vf h2,
+#punviewforum #vf h2, .pun .required strong span, .pun .icon div {
+	display: block;
+	overflow: hidden;
+	position: absolute;
+	text-indent: -9999em;
+	width: 0;
+}
+
+/* Generic Float Clear
+----------------------------------------------------------------*/
+
+.pun .inbox, .pun #brdmain, .pun .crumbs, .pun .pagepost, .pun .block2col {
+	min-height: 1px;
+}
+
+#brdtitle {
+	min-height: 175px;
+	/*background-image: -webkit-radial-gradient(#351963, #1D0840);
+	background-image: -moz-radial-gradient(#351963, #1D0840);
+	background-image: -o-linear-gradient(#351963, #1D0840);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#351963', endColorstr='#1D0840');
+	background-color: #351963;
+	zoom: 1;*/
+	/* IE10 Consumer Preview */ 
+background-image: -ms-linear-gradient(top, #734EB1 0%, #351963 100%);
+
+/* Mozilla Firefox */ 
+background-image: -moz-linear-gradient(top, #734EB1 0%, #351963 100%);
+
+/* Opera */ 
+background-image: -o-linear-gradient(top, #734EB1 0%, #351963 100%);
+
+/* Webkit (Safari/Chrome 10) */ 
+background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #734EB1), color-stop(1, #351963));
+
+/* Webkit (Chrome 11+) */ 
+background-image: -webkit-linear-gradient(top, #734EB1 0%, #351963 100%);
+
+/* W3C Markup, IE10 Release Preview */ 
+background-image: linear-gradient(to bottom, #734EB1 0%, #351963 100%);
+}
+
+
+#brdmenu {
+	display: block;
+	clear: both;
+}
+
+* html .pun .inbox, * html .pun #brdmain, * html .pun .infldset, * html .pun .crumbs, * html .pun .pagepost, * html .pun .block2col {
+	display: inline-block;
+}
+
+* html .pun .inbox, * html .pun #bdrdmain, * html .pun .infldset, * html .pun .crumbs, * html .pun .pagepost, * html .pun .block2col {
+	display: block;
+}
+
+.pun .inbox:after, .pun #brdmain:after, .pun .crumbs:after, .pun .pagepost:after, .pun .block2col:after {
+	content: " ";
+	display: block;
+	height: 0;
+	font-size: 0;
+	clear: both;
+	visibility: hidden;
+}
+
+.pun .block2col .inbox:after {
+	content: none;
+	clear: none;
+}
+
+.clearl {
+	clear: left;
+}
+
+
+/*****************************************************************
+2. COMMON STYLES
+*****************************************************************/
+
+/* Page Layout
+----------------------------------------------------------------*/
+
+.pun {
+	/*padding: 30px 40px;*/
+}
+
+#punredirect, #punmaint {
+	padding: 60px 20% 12px 20%;
+}
+
+#puninstall, #pundb_update {
+	padding: 20px 10%;
+}
+
+.pun .punwrap {
+	/*border: 1px solid;*/
+	padding: 0px;
+	/*-moz-border-radius: 10px;
+	border-radius: 10px;*/
+}
+
+.pun .top-box {
+	display: none;
+	height: 18px;
+	margin-bottom: -18px;
+	position: relative;
+	/*background: url(Spyro_Default/img/main_top.png) top left no-repeat;*/
+}
+
+.pun .top-box div {
+	height: 18px;
+	margin-left: 50%;
+	/*background: url(Spyro_Default/img/main_top.png) top right no-repeat;*/
+}
+
+.pun .end-box {
+	display: none;
+	margin-top: -17px;
+	height: 18px;
+	position: relative;
+	/*background: url(Spyro_Default/img/main_end.png) bottom left no-repeat;*/
+}
+
+.pun .end-box div {
+	display: none;
+	height: 18px;
+	margin-left: 50%;
+	/*background: url(Spyro_Default/img/main_end.png) bottom right no-repeat;*/
+}
+
+#punredirect h2, #punmaint h2 {
+	border-bottom-style: dotted;
+	border-bottom-width: 1px;
+	margin-bottom: 3px;
+}
+
+/* Section Spacing and Borders
+----------------------------------------------------------------*/
+
+#brdmain {
+	border-width: 2px 0;
+	margin-bottom: 12px;
+	padding: 12px 0;
+}
+
+#punindex #brdmain {
+	padding-top: 24px;
+}
+
+#punredirect #brdmain, #punmaint #brdmain {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+#brdstats {
+	border-width: 2px 0 0 0;
+	margin-top: 24px;
+	padding: 12px;
+	background-color: #F8F5FD;
+	border-radius: 5px;
+	border: solid 1px #E3D8F5;
+
+}
+
+#quickpost {
+	border-style: solid none none none;
+	border-width: 2px 0 0 0;
+	margin-top: 12px;
+	padding-top: 12px;
+}
+
+#announce {
+	border-style: solid none none none;
+	border-width: 2px 0 0 0;
+	padding-top: 3px;
+}
+
+/*****************************************************************
+3. COMMON BOARD ELEMENTS
+*****************************************************************/
+
+/* Logo, Description and Main Menu
+----------------------------------------------------------------*/
+
+#brdtitle h1 {
+	padding: 0 0 10px 0;
+}
+
+#brddesc {
+	display: none;
+	border-top-style: dotted;
+	border-top-width: 1px;
+	padding: 10px 0;
+}
+
+#brddesc p {
+	padding: 0;
+	
+}
+
+#brdmenu ul {
+	padding: 0;
+}
+
+#brdmenu li {
+	float: left;
+	text-align: center;
+}
+
+#brdmenu a:link, #brdmenu a:visited {
+
+	color: #DD6900;
+	font-weight: bold;
+	display: block;
+	min-width: 60px;
+	padding: 12px 16px 6px 8px;
+	white-space: nowrap;
+}
+
+#brdmenu a:hover, #brmenu a:active, #brdmenu a:focus {
+	text-decoration: none;
+}
+
+/* Welcome Box
+----------------------------------------------------------------*/
+
+#brdwelcome {
+	padding: 10px 0;
+}
+
+#brdwelcome .conl, #brdwelcome .conr, #brdwelcome p, #brdwelcome li {
+	display: inline;
+	padding: 0;
+}
+
+#brdwelcome .conl {
+  float: left;
+}
+
+#brdwelcome .conr {
+  float: right;
+}
+
+#brdwelcome li span {
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+	padding-left: 18px;
+	margin-right: 3px;
+	display: inline-block;
+	line-height: normal;
+	white-space: nowrap;
+}
+
+#brdwelcome .conl li:first-child span {
+	padding-left: 0;
+	background: none;
+}
+
+/* Stats
+----------------------------------------------------------------*/
+
+#brdstats .conl {
+	float: left;
+}
+
+#brdstats .conr {
+	float: right;
+	text-align: right;
+}
+
+#brdstats #onlinelist {
+	border-top-style: dotted;
+	border-top-width: 1px;
+	clear: both;
+}
+
+#brdstats #onlinelist dt, #brdstats #onlinelist dd {
+	display: inline;
+}
+
+/* Footer
+----------------------------------------------------------------*/
+
+.pun #modcontrols {
+
+	margin-bottom: 4px;
+	text-align: center;
+	width: 100%;
+}
+
+.pun #modcontrols dd {
+	display: inline;
+}
+
+.pun #brdfooter #modcontrols dd span {
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+	display: inline-block;
+	line-height: normal;
+	padding-left: 18px;
+	white-space: nowrap;
+}
+
+.pun #brdfooter .conl {
+	float: left;
+}
+
+.pun #brdfooter .conr {
+	text-align: right;
+	float: right;
+}
+
+.pun #brdfooter #poweredby a {
+	font-size: 1.077em;
+	font-weight: bold;
+}
+
+.pun #brdfooter #qjump {
+	padding-top: 5px;
+}
+
+.pun #brdfooter #qjump * {
+	white-space: nowrap;
+}
+
+.pun #brdfooter #searchlinks dd span {
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+	display: inline-block;
+	line-height: normal;
+	padding-left: 18px;
+	white-space: nowrap;
+}
+
+.pun #brdfooter #feedlinks {
+	padding-bottom: 0;
+}
+
+.pun #brdfooter #feedlinks span {
+	background: url(Spyro_Default/img/feed.png) center left no-repeat;
+	display: inline-block;
+	padding-left: 18px;
+	white-space: nowrap;
+}
+
+.pun #debugtime {
+	border-style: dotted none none none;
+	border-width: 1px 0 0 0;
+	margin-top: 7px;
+	text-align: center;
+}
+
+/* Breadcrumbs, Postlink, Pagination
+----------------------------------------------------------------*/
+
+.pun .linkst .inbox, .pun .linksb .inbox, .pun .postlinksb .inbox {
+	overflow: hidden;
+}
+
+.pun .linksb, .pun .postlinksb, .pun .linkst, .pun .crumbs {
+	clear: both;
+	position: relative;
+}
+
+.pun .linkst .crumbs {
+	font-family: "Trebuchet MS", Helvetica, Arial, sans-serif;
+	font-size: 1.462em;
+	line-height: 1.211em;
+	padding: 7px 0;
+}
+
+.pun .linksb .crumbs, .pun .postlinksb .crumbs {
+	font-family: "Trebuchet MS", Helvetica, Arial, sans-serif;
+	font-size: 1.154em;
+	
+}
+
+.pun .linkst .crumbsplus .pagepost {
+	border-top-style: dotted;
+	border-top-width: 1px;
+}
+
+.pun .linksb .crumbsplus .pagepost, .pun .postlinksb .crumbsplus .pagepost {
+	border-bottom-style: dotted;
+	border-bottom-width: 1px;
+}
+
+.pun .postlinksb .crumbs {
+	margin-right: 11em;
+}
+
+.pun .crumbs li {
+	float: left;
+	padding-right: 0.4em;
+	white-space: nowrap;
+}
+
+.pun .crumbs li strong {
+	font-weight: normal;
+}
+
+.pun .pagelink {
+	float: left;
+	white-space: nowrap;
+}
+
+.pun .pagelink strong, .pun .pagelink a, .pun .pagelink span.spacer {
+	border-style: none none none solid;
+	border-width: 0 0 0 1px;
+	display: inline-block;
+	padding: 0 12px 0 10px;
+	margin-right: -6px;
+}
+
+.pun .pagelink .item1 {
+	border: 0;
+}
+
+.pun .pagelink .pages-label {
+	display: inline-block;
+}
+
+.pun .postlink {
+	float: right;
+	font-weight: bold;
+	text-align: right;
+}
+
+.pun .modbuttons {
+	float: right;
+	padding: 5px 0 3px 0;
+}
+
+.pun .modbuttons input {
+	margin-left: 8px;
+}
+
+.pun .subscribelink {
+	position: absolute;
+	right: 0;
+	text-align: right;
+	top: 33px;
+}
+
+#punindex .subscribelink {
+	top: 0px;
+}
+
+#punindex .linksb {
+	height: 12px;
+}
+
+/*****************************************************************
+4. MAIN TABLES
+*****************************************************************/
+
+.pun #brdmain .blocktable {
+	position: relative;
+}
+
+#punindex #brdmain .blocktable h2, #punsearch #vf h2 {
+	font: 1em/1.462em Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	margin: 1px 1px 0 1px;
+	padding-left: 8px;
+	position: absolute;
+	left: 0;
+	white-space: nowrap;
+	z-index: 100;
+}
+
+#punindex .blocktable th.tcl, #punsearch #vf th.tcl {
+	font-size: 0;
+	text-indent: -9999em;
+	
+}
+
+.pun .blocktable .box {
+	margin-bottom: -1px;
+	overflow: hidden;
+	position: relative;
+}
+
+* html .pun .blocktable .box {
+	display: inline-block;
+	background: #fff;
+}
+
+.pun .blocktable table {
+	table-layout: fixed;
+	margin-bottom: -1px;
+}
+
+.pun .blocktable th {
+	padding: 7px 8px;
+	text-align: left;
+	color: #fff;
+	/*background-image: -webkit-radial-gradient(#351963, #1D0840);
+	background-image: -moz-radial-gradient(#351963, #1D0840);
+	background-image: -o-linear-gradient(#351963, #1D0840);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#351963', endColorstr='#1D0840');
+	zoom: 1;*/
+	background-color: #351963;
+}
+
+.pun .blocktable td {
+	padding: 7px 8px;
+	line-height: 1.3077em;
+	text-align: left;
+	border-color: #dfe6ee;
+	border-style: none none solid none;
+	border-width: 1px;
+}
+
+.pun .blocktable h3 {
+	font-size: 1.077em;
+	font-weight: bold;
+	padding: 0;
+}
+
+.pun .blocktable p {
+	padding: 0;
+}
+
+.pun .blocktable .tcl p {
+	padding: 5px 0 0 0;
+}
+
+.pun .blocktable .tcl {
+	width: auto;
+}
+
+.pun .blocktable .tc2, .pun .blocktable .tc3, .pun .blocktable .tcmod {
+	padding-left: 0;
+	padding-right: 0;
+	text-align: center;
+	width: 11%;
+}
+
+.pun .blocktable .tcr {
+	width: 30%;
+}
+
+.pun .blocktable td .newtext, .pun .blocktable td .pagestext, .pun .blocktable td .byuser {
+	white-space: nowrap;
+}
+
+.pun .blocktable .tcl h3 span.newtext {
+	font-size: 0.929em;
+	font-weight: normal;
+}
+
+.pun #vf td.tcl span.stickytext, .pun #vf td.tcl span.closedtext {
+	font-size: 1em;
+	font-weight: bold;
+}
+
+#punsearch #vf .tc2 {
+	padding-left: 8px;
+	padding-right: 8px;
+	text-align: left;
+	width: 18%;
+}
+
+#users1 .tcr {
+	width: 25%;
+}
+
+#users1 .tc2 {
+	padding-left: 8px;
+	padding-right: 8px;
+	text-align: left;
+	width: 25%;
+}
+
+#debug {
+	margin-top: 12px;
+}
+
+#debug .tcl {
+	width: 10%;
+}
+
+#punredirect #debug .tcl, #punmaint #debug .tcl {
+	width: 20%;
+}
+
+#debug .tcr {
+	width: 90%;
+	white-space: normal
+}
+
+#punindex .tcr .byuser {
+	display: block
+}
+
+#punindex td.tc2, #punindex td.tc3, #punindex td.tcr, .pun #vf td.tc2, .pun #vf td.tc3,
+.pun #vf td.tcr, #punindex td.tcl div.forumdesc, .pun #vf td.tcl span {
+	font-size: 0.923em;
+}
+
+.pun #vf td.tcl a {
+	font-weight: bold;
+}
+
+.pun #vf td.tcl span a {
+	font-weight: normal;
+}
+
+.pun .blocktable .tclcon {
+	height: 1%;
+	min-height: 1px;
+	overflow: hidden;
+	padding: 0 11px 0 12px;
+	position: relative;
+}
+
+.pun .blocktable .tclcon div {
+	width: 100%;
+	overflow: hidden;
+}
+
+#punindex .icon {
+	/*border-style: solid;
+	border-width: 8px;
+	height: 0;
+	overflow: hidden;
+	width: 0;*/
+	float: left;
+	width: 46px;
+	height: 25px;
+	background-repeat: no-repeat;
+	overflow: hidden;
+}
+
+#punviewforum .icon, #punpms_inbox .icon  {
+	float: left;
+	width: 35px;
+	height: 19px;
+	background-repeat: no-repeat;
+	background-size: 35px 19px;
+	overflow: hidden;
+}
+
+.pun .iposted .ipost {
+	font-weight: bold;
+	left: 0;
+	padding-left: 4px;
+	position: absolute;
+	text-align: center;
+	top: 0;
+	width: 8px;
+}
+
+/*****************************************************************
+MAIN POSTS
+*****************************************************************/
+
+/* Structure
+----------------------------------------------------------------*/
+
+.pun .blockpost {
+	margin-bottom: 7px;
+	overflow: hidden;
+	position: relative;
+    /*background-color: #F4F0FB;*/
+	border-radius: 5px;
+}
+
+.pun .blockpost.roweven  .postbody, .pun .blockpost.rowodd  .postleft, .pun .blockpost.rowodd  .postfootleft, .pun .blockpost.roweven  .postfootright, .pun .blockpost .box.roweven .postbody, .pun .blockpost .box.rowodd .inbox {
+	background-color: #F2EDFB;
+
+}
+
+.pun .blockpost.rowodd  .postbody, .pun .blockpost.roweven  .postleft, .pun .blockpost.roweven  .postfootleft, .pun .blockpost.rowodd  .postfootright, .pun .blockpost .box.rowodd .postbody, .pun .blockpost .box.roweven .inbox{
+  background-color: #F4F0FB;
+}
+
+* html .pun .blockpost {
+	display: inline-block;
+}
+
+.pun .blockpost h2 {
+	font: 1em/1.462em Arial, Helvetica, sans-serif;
+	white-space: nowrap;
+	border: solid none;
+	height: 1.462em;
+	padding: 0.538em 8px 0.538em 236px;
+	font-weight: normal;
+}
+
+dt a{
+	border-right: #234234;
+}
+
+.pun .blockpost .roweven h2 {
+	background: #F7F6F7;
+	color: #444;
+
+}
+
+.pun .blockpost .rowodd h2 {
+	background: #fff;
+	color: #444;
+}
+
+#punsearch .blockpost h2 {
+	height: auto;
+	padding-left: 36px;
+	white-space: normal;
+}
+
+#punsearch .blockpost h2 span span {
+	white-space: nowrap;
+	display: inline-block;
+	font: 1.077em "Trebuchet MS", Arial, Helvetica, sans-serif
+}
+
+#punsearch .blockpost .icon {
+	position: absolute;
+	top: 0;
+	margin-top: -2.154em;
+}
+
+.pun .blockpost h2 .conr {
+	float: right;
+	text-align: right;
+}
+
+.pun .blockpost .inbox {
+	float: right;
+	position: relative;
+	width: 100%;
+}
+
+.pun .blockpost .postbody, .pun .blockpost .postfoot {
+	float: right;
+	margin-right: -218px;
+	position: relative;
+	text-align: left;
+	width: 100%;
+}
+
+.pun .blockpost .postleft, .pun .blockpost .postfootleft {
+	width: 194px;
+	padding: 7px 12px 7px 12px;
+	float: left;
+	margin-left: -218px;
+	position: relative;
+	border-right: solid 1px #E3D8F5;
+}
+
+.pun .blockpost .postleft dl {
+	padding: 0;
+}
+
+#punviewtopic .blockpost dt, #punmoderate .blockpost dt {
+	display: block;
+	position: absolute;
+	padding: 0.538em 0 0.538em 12px;
+	height: 1.462em;
+	top: -2.555em;
+	left: 0;
+	overflow: hidden;
+	width: 205px;
+	/*border-right: solid 1px #E3D8F5;*/
+}
+
+.pun .blockpost dt strong {
+	font-size: 1.231em;
+	font-weight: bold;
+}
+
+.pun .blockpost .postleft dd {
+	font-size: 0.923em;
+}
+
+.pun .blockpost .postleft .usertitle {
+	padding: 4px 0 6px 0;
+	font-size: 1em;
+}
+
+.pun .blockpost .postleft .postavatar {
+	display: block;
+	margin: 0 0 4px 0;
+}
+
+.pun .blockpost .postright {
+	position: relative;
+	padding: 4px 230px 7px 18px;
+	border-left: solid 1px #E3D8F5;
+}
+
+.pun .postmsg {
+	width:100%;
+	overflow: hidden;
+	word-wrap: break-word;
+}
+
+.pun .blockpost .postfootright {
+	position: relative;
+	padding: 7px 230px 7px 18px;
+	text-align: right;
+		border-left: solid 1px #E3D8F5;
+
+}
+
+.pun .postfoot p, .pun .postfoot ul {
+	padding: 0;
+}
+
+.pun .blockpost .postfootright li {
+	display: inline;
+}
+
+.pun .blockpost .postfootright li span {
+	display: inline-block;
+	padding-left: 16px;
+	margin-left: 8px;
+	line-height: normal;
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+}
+
+.pun .blockpost .usercontacts {
+	padding: 7px 0;
+}
+
+.pun .blockpost .usercontacts .email {
+	background: url(Spyro_Default/img/email.png) left 65% no-repeat;
+	margin-right: 5px;
+	padding-left: 21px;
+	display: inline-block;
+	line-height: normal;
+}
+
+.pun .blockpost .usercontacts .website {
+	background: url(Spyro_Default/img/ext.png) left 65% no-repeat;
+	padding-left: 18px;
+	display: inline-block;
+	line-height: normal;
+}
+
+.pun .postsignature hr {
+	border:none;
+	height: 1px;
+	margin-left: 0px;
+	text-align: left;
+}
+
+/* Content (includes other user content)
+----------------------------------------------------------------*/
+
+.pun .usercontent {
+	padding: 7px 0;
+}
+
+.pun .postmsg p, .pun .postmsg li, #punhelp p samp {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.pun .usercontent h1, .pun .usercontent h2, .pun .usercontent h3,
+.pun .usercontent h4, .pun .usercontent h5, .pun .usercontent h6 {
+	padding: 7px 0 0 0;
+}
+
+.pun .postmsg h5, #punhelp h5 {
+	font-size: 1.231em;
+	font-weight: bold;
+	padding: 7px 0;
+}
+
+.pun .usercontent ul, .pun .postmsg ul {
+	list-style: disc;
+	padding: 4px 13px 4px 30px;
+}
+
+.pun .usercontent ol, .pun .postmsg ol {
+	list-style: decimal;
+	padding: 4px 13px 4px 30px;
+}
+
+.pun .usercontent ol.alpha, .pun .postmsg ol.alpha {
+	list-style: lower-alpha;
+}
+
+.pun .usercontent li, .pun .postmsg li {
+	padding: 0 3px;
+}
+
+.pun .usercontent li p, .pun .postmsg li p {
+	padding: 0;
+}
+
+.pun span.bbu {
+	text-decoration: underline;
+}
+
+.pun span.bbs, .pun del {
+	text-decoration: line-through;
+}
+
+.pun .postmsg ins, #punhelp samp ins {
+	text-decoration: none;
+}
+
+.pun .blockpost .postmsg .postedit {
+	font-size: 0.857em;
+}
+
+.pun .blockform .postsignature, .pun .blockpost .postsignature {
+	font-size: 0.923em;
+}
+
+.pun .codebox {
+	border-style: solid;
+	border-width: 1px;
+	margin: 0.75em 1em;
+	padding: 0;
+}
+
+.pun .quotebox {
+	border-style: solid;
+	border-width: 0px 0px 0px 4px;
+	margin: 0.75em 1em;
+	padding: 0 0.75em;
+}
+
+.pun .quotebox cite {
+	display: block;
+	padding: 0.75em 0 0 0;
+	font-weight: bold;
+	line-height: 1.462em;
+}
+
+.pun .quotebox blockquote {
+	overflow: hidden;
+	width: 100%;
+}
+
+.pun .codebox pre {
+	overflow-y:hidden;
+	overflow: auto;
+	width: 100%;
+	direction: ltr;
+	text-align: left;
+}
+
+* html .pun .codebox pre {
+	padding-bottom: 10px;
+}
+
+*:first-child+html .pun .codebox pre {
+	padding-bottom: 10px;
+}
+
+.pun .codebox pre code {
+	padding: 0.75em;
+	white-space: pre;
+}
+
+.pun div[class*=codebox] pre code {
+	display: inline-block;
+}
+
+* html .pun .codebox pre code {
+	display: block;
+}
+
+.pun .codebox pre.vscroll {
+	height: 32em;
+	overflow: auto;
+	overflow-y: auto
+}
+
+.pun .postmsg img, #punhelp samp img {
+	vertical-align: text-top;
+}
+
+.pun .postmsg .postimg img {
+	max-width: 98%;
+	vertical-align: middle;
+	margin: 7px 0.5em 7px 0;
+}
+
+.pun .postmsg .postimg a:link img, .pun .postmsg .postimg a:visited img {
+	border-style: solid;
+	border-width: 2px;
+}
+
+/*****************************************************************
+MAIN FORMS
+*****************************************************************/
+
+#punedit .blockform h2, #punpost .blockform h2, #postpreview h2, #posterror h2,
+.pun #quickpost h2, .pun #reportform h2, #pundelete .blockform h2 {
+	font: 1em/1.462em Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	white-space: nowrap;
+	padding: 10px 19px 4px 37px;
+	border: 0;
+}
+
+#punpost .blockform h2, #punedit .blockform h2,.pun #quickpost h2,
+#pundelete .blockform h2 {
+	width: 25em;
+	position: absolute;
+	z-index: 100;
+}
+
+.pun #quickpost legend, #punpost legend, #punedit legend {
+	width: 25em;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.pun .blockform .box {
+	padding-bottom: 12px;
+	background-color: #F8F5FD;
+	border-radius: 5px;
+}
+
+.pun #posterror {
+	border-style: solid;
+	border-width: 1px;
+}
+
+.pun #posterror .box {
+	padding: 0 18px 12px 18px;
+	background: #fff;
+}
+
+.pun #msg .box {
+	background: #fff;
+	padding: 12px 18px 12px 18px;
+}
+
+* html .pun .blockform .box, * html .pun #posterror {
+	display: inline-block;
+	background: #fff;
+}
+
+.pun .blockform .forminfo, .pun .error-info {
+	padding: 12px 18px 12px 18px;
+	border-style: solid none;
+	position: relative;
+}
+
+.pun .blockform .forminfo {
+	margin-top: 12px;
+}
+
+#pundelete .blockform .forminfo {
+	margin-top: 33px;
+}
+
+.pun .forminfo h3 {
+	padding-bottom: 0;
+}
+
+.pun .error-list li {
+	padding-left: 24px;
+	background: url(Spyro_Default/img/exclaim.png) center left no-repeat;
+}
+
+.pun .inform {
+	padding: 0 18px;
+}
+
+.pun legend {
+	font-weight: bold;
+	padding: 10px 19px 4px 19px;
+}
+
+* html .pun legend {
+	margin-left: -7px;
+}
+
+*:first-child+html .pun legend {
+	margin-left: -7px;
+}
+
+.pun .infldset {
+	border-style: solid;
+	border-width: 1px;
+	padding: 12px 18px;
+	background-color: #F5F5F5;
+}
+
+#punregister #rules .infldset {
+	padding: 5px 18px;
+}
+
+.pun fieldset p {
+	padding: 0 0 7px 0;
+	width: 100%;
+}
+
+.pun fieldset .usercontent p {
+	padding: 7px 0;
+}
+
+.pun fieldset label {
+	display: block;
+	padding: 0 0 7px 0;
+}
+
+.pun label em {
+	font-weight: normal;
+	font-style: normal;
+}
+
+.pun .required strong {
+	background: url(Spyro_Default/img/asterisk.png) center right no-repeat;
+	font-weight: normal;
+	padding-right: 14px;
+	white-space: pre;
+	display: inline-block;
+	line-height: normal;
+}
+
+.pun label input, .pun label select, .pun label textarea {
+	margin-top: 2px;
+}
+
+.pun label.conl {
+	display: inline-block;
+	padding-right: 12px;
+}
+
+.pun form .buttons {
+	padding: 8px 19px 8px 34px;
+	margin-bottom: -12px;
+}
+
+.pun .blockform .buttons input {
+	margin-right: 12px;
+}
+
+.pun .rbox {
+	padding: 3px 0;
+}
+
+.pun .rbox label {
+	padding: 3px 0 3px 1.75em;
+	position: relative;
+	min-height: 1px;
+}
+
+* html .pun .rbox label {
+	text-indent: -3px;
+	height: 1%;
+}
+
+.pun .rbox input {
+	margin: 3px 0.75em 3px -1.75em;
+	float: left;
+	position: relative;
+	vertical-align: middle;
+	padding: 0;
+	height: 1em;
+	width: 1em;
+}
+
+.pun input[type=text], .pun select, .pun textarea {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.pun .txtarea textarea, .pun input.longinput {
+	width: 98%;
+	background-position: bottom right; 
+	background-repeat: no-repeat;
+	border: solid 1px #ABADB3;
+}
+.pun .txtarea textarea {
+	background-image: url('Spyro_Default/textbg.jpg');
+}
+
+.pun #quickpost .txtarea {
+	padding-right: 12px;
+	position: relative;
+}
+
+.pun .blockform .bblinks {
+	padding-top: 0;
+}
+
+.pun .blockform .bblinks li {
+	display: inline;
+}
+
+.pun .blockform .bblinks li span {
+	background: url(Spyro_Default/img/help.png) center left no-repeat;
+	margin-right: 8px;
+	padding-left: 20px;
+	display: inline-block;
+}
+
+.pun #quickpost .bblinks {
+	padding-top: 0;
+}
+
+.pun #quickpost .bblinks li {
+	display: inline;
+}
+
+.pun #login p.clearb {
+	border-top-style: dotted;
+	border-top-width: 1px;
+	font-size: 0;
+	height: 0;
+	line-height: 0;
+	margin-top: 7px;
+	overflow: hidden;
+	padding-bottom: 3px;
+	padding-top: 7px;
+	text-indent: -9999em;
+	width: 100%;
+}
+
+.pun #postreview {
+	padding-top: 12px;
+}
+
+.pun #postpreview, .pun #posterror {
+	margin-bottom: 12px;
+	background-color: #ffffff;
+}
+
+.pun #postpreview .postright {
+	padding: 0;
+}
+
+.pun #postpreview .postbody {
+	border-style: solid;
+	border-width: 1px;
+	float: none;
+	margin: 0 18px 12px 18px;
+	padding: 0;
+	padding: 4px 18px 4px 18px;
+	width: auto;
+}
+
+.pun span.email {
+	background: url(Spyro_Default/img/email.png) left 65% no-repeat;
+	margin-right: 5px;
+	padding-left: 21px;
+	display: inline-block;
+	line-height: normal;
+}
+
+.pun span.website {
+	background: url(Spyro_Default/img/ext.png) left 65% no-repeat;
+	padding-left: 18px;
+	display: inline-block;
+	line-height: normal;
+}
+
+#punmisc #rules .box {
+	padding: 5px 18px;
+	background: #fff;
+}
+
+
+#punhelp .box {
+	border-style: solid;
+	border-width: 1px;
+	padding: 7px 12px;
+	background: #fff;
+}
+
+.pun .multiselect {
+	float: left;
+	padding-bottom: 7px;
+}
+
+.pun .checklist {
+	border-width: 1px;
+	border-style: solid;
+	max-height: 9em;
+	width: 20em;
+	overflow: auto;
+	padding: 0.25em 0.5em;
+	margin: 0.25em 16px 0 0.15em;
+}
+
+.pun .checklist legend {
+	padding: 0;
+}
+
+.pun .checklist legend span {
+	width: auto;
+	max-width: 25em;
+}
+
+/*****************************************************************
+PROFILES (+ ADMIN MENU)
+*****************************************************************/
+
+/* Profile / Admin
+----------------------------------------------------------------*/
+
+.pun .blockmenu {
+	width: 13em;
+	float: left;
+	padding-bottom: 12px;
+	
+}
+
+.pun .block2col .blockform, .pun .block2col .block {
+	margin-left: 15em;
+}
+
+.pun .blockmenu .block2 {
+	padding-top: 19px;
+}
+
+.pun .blockmenu ul {
+	padding: 0;
+
+}
+
+.pun .blockmenu li {
+	font-weight: bold;
+	margin-bottom: 5px;
+	border-radius: 5px;
+	background-color: #F4F0FB;
+	padding: 0;
+}
+
+.pun .blockmenu a:link, .pun .blockmenu a:visited {
+	display: block;
+	padding: 9px 6px 3px 6px;
+	min-height: 1px;
+	text-decoration: none;
+}
+
+* html .pun .blockmenu a:link,  * html .pun .blockmenu a:visited {
+	height: 1%;
+}
+
+.pun .blockmenu a:hover, .pun .blockmenu a:active, .pun .blockmenu a:focus {
+	text-decoration: none;
+}
+
+#viewprofile .box {
+	border-style: solid;
+	border-width: 1px;
+	padding-bottom: 18px;
+	background: #fff
+}
+
+#viewprofile dt, #adstats dt {
+	padding: 7px 0;
+	position: absolute;
+	width: 13em;
+	left: 0;
+}
+
+#viewprofile dl {
+	border-style: solid none none none;
+	border-width: 1px;
+	margin: 7px 0;
+	padding: 0;
+	width: 100%;
+	position: relative;
+}
+
+#adintro, #adstats {
+	padding: 25px;
+	background-color: #F8F5FD;
+	border-radius: 5px;
+
+}
+
+#adintro li span {
+	display: inline-block;
+	padding-left: 16px;
+	margin-left: 8px;
+	line-height: normal;
+	background: url(Spyro_Default/img/bull.png) center left no-repeat;
+}
+
+#adstats .inbox, #adintro .inbox {
+	border-style: solid;
+	border-width: 1px;
+	padding: 18px;
+}
+
+.inbox p {
+  padding: 18px;
+}
+
+#adstats dl {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	position: relative;
+}
+
+#viewprofile dd, #adstats dd {
+	border-style: none none solid none;
+	border-width: 1px;
+	padding: 7px 0 7px 13em;
+}
+
+/*****************************************************************
+COLOUR SCHEME
+*****************************************************************/
+
+/* Basic defaults and Common Items
+----------------------------------------------------------------*/
+html, body, .pun {
+	color: #333;
+	background-image:url('Spyro_Default/spyrogenerations.png');
+	background-position: 0px 216px;
+}
+
+.pun .punwrap {
+	color: #566579;
+	margin: 0;
+	min-height: 100%
+}
+
+#brdtitle #brddesc, .pun .pagepost, #brdstats #onlinelist, #brdfooter #searchlinks, #brdfooter #modcontrols,
+#punmaint h2, #punredirect h2, #adminconsole .submittop, .pun #debugtime, .pun .pagelink a, .pun .pagelink * {
+	border-color: #b9c5ce;
+}
+
+.pun a, .pun a:link, .pun a:visited {
+	color: #2365B0;
+}
+
+.pun a:hover, .pun a:active, .pun a:focus {
+	color: #DD6900;
+}
+
+.pun .postmsg .postimg a:link img, .pun .postmsg .postimg a:visited img {
+	border-color: #22538a;
+}
+
+.pun .postmsg .postimg a:hover img, .pun .postmsg .postimg a:active img, .pun .postmsg .postimg a:focus img {
+	border-color: #DD6900;
+}
+
+/* Primary Navigation
+----------------------------------------------------------------*/
+
+#brdmenu {
+  background-image:url('Spyro_Default/firetest_gradient.png');
+  background-position: left bottom;
+  background-size: 163px 35px;
+  background-repeat: repeat-x;
+}
+
+#brdmenu a, #brdmenu a:link, #brdmenu a:visited {
+	color: #fff;
+	text-shadow:1px 1px 0 #000,
+-1px -1px 0 #000,
+1px -1px 0 #000,
+-1px 1px 0 #000,
+0px 1px 0 #000,
+1px 0px 0 #000,
+0px -1px 0 #000,
+-1px 0px 0 #000,
+4px 4px 3px #000;
+
+}
+
+#brdmenu a:hover, #brdmenu a:active, #brdmenu a:focus {
+	
+	color: #CFBFF3;
+}
+
+/* Main Tables
+----------------------------------------------------------------*/
+
+.pun .blocktable .box{
+	border-color: #b9c5ce #d9e1e7;
+}
+
+#punindex .blocktable h2, .pun #vf h2 {
+	color: #fff;
+		text-shadow:1px 1px 0 #000,
+-1px -1px 0 #000,
+1px -1px 0 #000,
+-1px 1px 0 #000,
+0px 1px 0 #000,
+1px 0px 0 #000,
+0px -1px 0 #000,
+-1px 0px 0 #000,
+4px 4px 3px #000;
+	font-size: 14px;
+}
+
+#adminconsole fieldset th, #adminconsole fieldset td {
+	border-color: #E3D8F5;
+	border-width: 1px 0;
+	font-weight: normal;
+}
+
+.pun #users1 h2 {
+	/*background: #fff;*/
+}
+
+.pun .blocktable td {
+	border-color: #E3D8F5;
+}
+
+.pun .blocktable td.tcl span.stickytext {
+	color: #3399CC;
+}
+
+/* Main Posts
+----------------------------------------------------------------*/
+
+.pun .blockpost {
+	border-color: #DFD4F3 #C9B9E4;
+}
+
+.pun .blockpost h2 {
+	/*background-image: -webkit-radial-gradient(#351963, #1D0840);
+	background-image: -moz-radial-gradient(#351963, #1D0840);
+	background-image: -o-linear-gradient(#351963, #1D0840);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#351963', endColorstr='#1D0840'); */			
+	background-color: #351963;
+}
+
+
+.pun .blockpost h2 a, .pun .blockpost h2 span, .pun .blockpost h2 div, .pun .postleft dl dt a {
+	color: #fff;
+}
+
+.pun .blockpost .postbody, .pun .blockpost .postfoot {
+	border-color: #E3D8F5;
+}
+
+.pun .blockpost .postfootright li {
+	color: #777;
+}
+
+.pun .postmsg, #punhelp code, #punhelp samp {
+	color: #333;
+}
+
+.pun .postsignature, .pun .postmsg .postedit {
+	color: #566579;
+}
+
+.pun .quotebox {
+	color: #351963;
+	background-color: #EBE4F6;
+	border: dotted 1px #351963;
+}
+
+.pun .quotebox cite {
+	color: #351963;
+}
+
+.pun .codebox, #punhelp .codebox code {
+	background: #333;
+	color: #777;
+}
+
+.pun .postmsg hr {
+	background: #b9c5ce;
+}
+
+.pun .postmsg ins, #punhelp samp ins {
+	background-color: #ff0;
+}
+
+/* Main Forms + Profile
+----------------------------------------------------------------*/
+
+.pun .blockform .box, #adstats, #adintro, #postpreview, #posterror {
+	border-color: #b9c5ce #d9e1e7;
+}
+
+#punmisc #rules .box, #punhelp .box {
+	border-color: #b9c5ce #d9e1e7;
+	background: #fff;
+}
+
+.pun #quickpost h2, #punpost .blockform h2, #punedit .blockform h2, #posterror h2,
+  #pundelete .blockform h2 {
+  background-color: #F8F5FD;
+	color: #777;
+}
+
+.pun .forminfo {
+	border-color: #E3D8F5;
+}
+
+#puninstall form#install .forminfo {
+	color: #777;
+}
+
+.pun #posterror .error-info {
+	background: #ffffe1;
+	border-color: #E3D8F5;
+}
+
+#puninstall form#install .error-info {
+	background: #ffffe1;
+	border-color: #E3D8F5;
+	color: #333;
+}
+
+.pun .infldset, #adintro .inbox, #adstats .inbox {
+	border: solid 1px #E3D8F5;
+	border-radius: 15px;
+	background-color: #F4F0FB;
+}
+
+.pun label, .pun legend, #adminconsole fieldset th {
+}
+
+.pun fieldset p {
+	border-color: #b9c5ce;
+}
+
+.pun .blockmenu ul, .pun .blockmenu li {
+	border-color: #b9c5ce;
+}
+
+.pun .blockmenu a:hover, .pun .blockmenu a:active, .pun .blockmenu a:focus {
+	background: #ffffe6;
+	border-radius: 5px;
+}
+
+.pun .blockmenu .isactive a:link, .pun .blockmenu .isactive a:visited {
+	color: #333;
+}
+
+.pun #viewprofile .box, .pun #adminconsole .box, .pun #block2col .box {
+	border-color: #b9c5ce #d9e1e7;
+}
+
+#adminmenu .box {
+	background: none;
+}
+
+.pun #viewprofile dt, #adstats dt {
+	color: #777;
+}
+
+.pun #viewprofile dl, .pun #viewprofile dd, #adstats dl, #adstats dd {
+	border-color: #E3D8F5;
+}
+
+#adminconsole fieldset td.nodefault {
+	background: #d59b9b;
+}
+
+.pun .multiselect {
+	color: #777;
+}
+
+.pun .checklist {
+	background: white;
+	border-color: #ccc;
+}
+
+/* Status Indicators
+----------------------------------------------------------------*/
+
+.pun .icon {
+	background-image:url('Spyro_Default/img/folder_big.gif');
+}
+
+.pun .iredirect .icon {
+	background-image:url('Spyro_Default/img/folder_locked_big.gif');
+}
+
+.pun .inew .icon {
+	background-image:url('Spyro_Default/img/folder_new_big.gif');
+}
+
+* {
+	margin:0;
+	padding:0;
+} 
+
+/* must declare 0 margins on everything, also for main layout components use padding, not 
+vertical margins (top and bottom) to add spacing, else those margins get added to total height 
+and your footer gets pushed down a bit more, creating vertical scroll bars in the browser */
+
+html, body, #punindex, #punmisc, #punmoderate, #punadmin, #punmessage_list, #punviewforum, #punuserlist, #punprofile, #punviewtopic, #punregister, #punlogin, #punsearch, #punpms_inbox
+{
+	height: 100%;
+}
+
+.pagepost {
+	max-height: 35px;
+}
+
+.punwrap {
+	min-height: 100%;
+}
+
+#brdmain {
+	overflow:auto;
+	padding-bottom: 230px;
+}  /* must be same height as the footer */
+
+#brdfooter {
+	position: relative;
+	margin-top: -230px; /* negative value of footer height */
+	height: 230px;
+	clear:both;
+} 
+
+#brdfooter a {
+  color: #CFBFF3;
+}
+
+#brdfooternav {
+	padding: 20px;
+}
+
+#fire-bottom {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  z-index: -1;
+  background-image:url('Spyro_Default/fire-bottom.png');
+  background-repeat: no-repeat;
+  height: 230px;
+  width: 267px;
+}
+
+/*Opera Fix*/
+body:before {/* thanks to Maleika (Kohoutec)*/
+	content:"";
+	height:100%;
+	float:left;
+	width:0;
+	margin-top:-32767px;/* thank you Erik J - negate effect of float*/
+}
+/* IMPORTANT
+You also need to include this conditional style in the <head> of your HTML file to feed this style to IE 6 and lower and 8 and higher.
+
+<!--[if !IE 7]>
+	<style type="text/css">
+		.punwrap {display:table;height:100%}
+	</style>
+<![endif]-->
+*/
+
+/* Poll */
+#ap_poll_input {
+}
+
+.ap_poll_hidden { display: none; }
+
+fieldset.ap_poll {
+	margin-top: 2em;
+	padding: 1em;
+	background-color: #F6F9FC;
+	border: 1px solid #DFE6EE;
+}
+
+.ap_poll legend {
+	font-weight: normal;
+}
+
+.ap_poll p {
+	font-weight: bold;
+}
+
+.ap_poll table {
+	width: auto;
+}
+
+.ap_poll th {
+	font-weight: normal;
+	padding: .5em 1em .5em 0;
+}
+
+.ap_poll td {
+	padding: .5em 1em;
+}
+
+.ap_poll label {
+	
+}
+
+.ap_poll .percent {
+	text-align: right;
+}
+
+.ap_poll .results .bar {
+	height: 20px;
+	background-color: #44699C;
+}
+
+.ap_poll .results .bar .top {
+	background-color: #4F78B2;
+	width: 100%;
+	height: 10px;
+}
+
+.ap_poll .total {
+	color: #b7b7b7;
+	margin-top: .5em;
+	font-style: italic;
+}
+
+/* Something extra for the honeypot spam mod */
+
+.pun .usernamefield {
+	display: none;
+}
+
+
+
+.notify {
+	background-image: -webkit-radial-gradient( #FF2300, #A61700);
+	background-image: -moz-radial-gradient(#FF2300, #A61700,);
+	background-image: -o-linear-gradient(#FF2300, #A61700);
+	background-color: #FF2300;
+	position: relative;
+	float: right;
+	top: 10px;
+	width: 20px;
+	height: 20px;
+	border-radius: 10px;
+	font-size: 10px;
+	color: #fff;
+	text-shadow: none;
+	border: solid 3px #fff;
+}
+
+.gid1, .gid2, .gid5 {
+  /*font-weight: normal;
+  text-shadow:1px 1px 0 #000,
+  -1px -1px 0 #000,
+  1px -1px 0 #000,
+  -1px 1px 0 #000,
+  0px 1px 0 #000,
+  1px 0px 0 #000,
+  0px -1px 0 #000,
+  -1px 0px 0 #000;*/
+}
+
+.gid1:hover, .gid2:hover, .gid5:hover {
+text-decoration: none;
+
+}

@@ -15,8 +15,8 @@
 #adminconsole th {width: 15em; font-weight: bold}
 #adminconsole input, #adminconsole select, #adminconsole textarea {margin-bottom: 0; margin-top: 0; font-weight: normal}
 #adminconsole table.aligntop th, #adminconsole table.aligntop td {vertical-align: top}
-#adminconsole table.aligntop th {padding-top: 0.7em}
-#adminconsole td, #adminconsole th {border-style: solid; border-width: 3px 0 3px 0}
+/*#adminconsole table.aligntop th {padding-top: 0.7em}*/
+#adminconsole td, #adminconsole th {border-style: solid;}
 #adminconsole p {padding-bottom: 6px}
 #adminconsole .topspace {padding-top: 6px}
 #adminconsole p.submittop, #adminconsole p.submitend {text-align: center}

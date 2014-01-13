@@ -5,6 +5,8 @@
 <pun_head>
 </head>
 
+<!-- This is maintenance.tpl -->
+
 <body>
 
 <div id="punmaint" class="pun">

@@ -1,0 +1,257 @@
+#--- MOD Very Simple AntiBot Registration (VSABR)
+Version: 1.5.7
+Release date: 2013-02-23
+This modification adds a simple question to the registration form.
+The question is obtained randomly from a text list which also contains the numerical responses.
+The questions are of the form: "What is two plus two" and all responses are of primary school level.
+You can write your own questions and answers in the language file:
+lang/your_language/mod_very_simple_antibot.php.
+Questions may be different depending on the languages.
+
+Option: The question will also be asked for the messages sent by guests, if they are allowed to post. To delete this option, edit the file search_insert.php before installing with indications noted in this file.
+
+======================[ MANUAL INSTALLATION PROCEDURE ]=======================
+
+Note: There may be several times the opening and saving the same file.
+This is due to changes order that are made by type and not by files.
+Are performed, in order: Insert before, Add after, Replace then Move
+
+#----[ FOLLOW THE FOLLOWING STEPS TO MAKE THE CHANGES TO FILES ]----
+
+#---[ 1 OPEN ]----------------------------------------------------------------
+
+    register.php
+
+#--[ 2 FIND ] Info: $search_file[register][0]---------------------------------
+
+<p class="buttons"><input type="submit" name="register"
+
+#--[ 3 INSERT BEFORE ] Info: $insert_file[register][0]------------------------
+
+<!-- [modif oto] - mod VSABR Very Simple AntiBot Registration -->
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><input type="hidden" name="username" value="" /><br />
+			</label>
+		</div>
+	</fieldset>
+</div>
+<!-- [modif oto] - End mod VSABR -->
+
+
+#--[ 4 FIND ] Info: $search_file[register][1]---------------------------------
+
+	// Validate email
+
+#--[ 5 INSERT BEFORE ] Info: $insert_file[register][1]------------------------
+
+//[modif oto] - mod VSABR Very Simple AntiBot Registration - Validate  answer to the question
+$mod_vsabr_p_question = isset($_POST['captcha_q']) ? trim($_POST['captcha_q']) : '';
+$mod_vsabr_p_answer = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
+$mod_vsabr_questions_array = array();
+foreach ($mod_vsabr_questions as $k => $v)
+  $mod_vsabr_questions_array[md5($k)] = $v;
+if (empty($mod_vsabr_questions_array[$mod_vsabr_p_question]) || $mod_vsabr_questions_array[$mod_vsabr_p_question] != $mod_vsabr_p_answer)
+  $errors[] = $lang_mod_vsabr['Robot test fail'];
+//[modif oto] - End mod VSABR
+
+
+#--[ 6 FIND ] Info: $search_file[register][2]---------------------------------
+
+// Load the register.php language file
+
+#--[ 7 INSERT BEFORE ] Info: $insert_file[register][2]------------------------
+
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
+
+
+******************************************************************************
+#-------[ 8 SAVE FILE register.php ]
+******************************************************************************
+
+#---[ 9 OPEN ]----------------------------------------------------------------
+
+    post.php
+
+#--[ 10 FIND ] Info: $search_file[post][0]------------------------------------
+
+<p class="buttons"><input type="submit" name="submit"
+
+#--[ 11 INSERT BEFORE ] Info: $insert_file[post][0]---------------------------
+
+<?php //[modif oto] - mod VSABR Very Simple AntiBot Registration
+if($pun_user['is_guest']) : ?>
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><br	/>
+			</label>
+		</div>
+	</fieldset>
+</div>
+<?php endif; //[modif oto] - End mod VSABR ?>
+
+
+#--[ 12 FIND ] Info: $search_file[post][1]------------------------------------
+
+	// Flood protection
+
+#--[ 13 INSERT BEFORE ] Info: $insert_file[post][1]---------------------------
+
+//[modif oto] - mod VSABR Very Simple AntiBot Registration - Validate  answer to the question
+if($pun_user['is_guest']) {
+	$mod_vsabr_p_question = isset($_POST['captcha_q']) ? trim($_POST['captcha_q']) : '';
+	$mod_vsabr_p_answer = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
+	$mod_vsabr_questions_array = array();
+	foreach ($mod_vsabr_questions as $k => $v)
+  	$mod_vsabr_questions_array[md5($k)] = $v;
+	if (empty($mod_vsabr_questions_array[$mod_vsabr_p_question]) || $mod_vsabr_questions_array[$mod_vsabr_p_question] != $mod_vsabr_p_answer)
+  	$errors[] = $lang_mod_vsabr['Robot test fail'];
+}
+//[modif oto] - End mod VSABR
+
+
+#--[ 14 FIND ] Info: $search_file[post][2]------------------------------------
+
+// Load the post.php language file
+
+#--[ 15 INSERT BEFORE ] Info: $insert_file[post][2]---------------------------
+
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
+
+
+******************************************************************************
+#-------[ 16 SAVE FILE post.php ]
+******************************************************************************
+
+#---[ 17 OPEN ]---------------------------------------------------------------
+
+    viewtopic.php
+
+#--[ 18 FIND ] Info: $search_file[viewtopic][0]-------------------------------
+
+// Load the viewtopic.php language file
+
+#--[ 19 INSERT BEFORE ] Info: $insert_file[viewtopic][0]----------------------
+
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
+
+
+#--[ 20 FIND ] Info: $search_file[viewtopic][1]-------------------------------
+
+<p class="buttons"><input type="submit" name="submit"
+
+#--[ 21 INSERT BEFORE ] Info: $insert_file[viewtopic][1]----------------------
+
+<?php //[modif oto] - mod VSABR Very Simple AntiBot Registration
+if($pun_user['is_guest']) : ?>
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><br	/>
+			</label>
+		</div>
+	</fieldset>
+</div>
+<?php endif; //[modif oto] - End mod VSABR ?>
+
+
+******************************************************************************
+#-------[ 22 SAVE FILE viewtopic.php ]
+******************************************************************************
+
+#---[ 23 OPEN ]---------------------------------------------------------------
+
+    register.php
+
+#--[ 24 FIND ] Info: $search_add_file[register][0]----------------------------
+
+	message($lang_register['No new regs']);
+
+
+#--[ 25 ADD AFTER ] Info: $insert_add_file[register][0]-----------------------
+
+//[modif oto] - VSABR Very Simple Anti Bot Registration
+//If the hidden field username contains something is that it was completed by a BOT.
+if(!empty($_REQUEST['username']))
+  message($lang_register['No new regs']);
+
+
+#--[ 26 FIND ] Info: $search_add_file[register][1]----------------------------
+
+$required_fields = array('req_user' => $lang_common['Username'], 'req_password1' => $lang_common['Password'], 'req_password2' => $lang_prof_reg['Confirm pass'], 'req_email1' => $lang_common['Email'], 'req_email2' => $lang_common['Email'].' 2');
+
+
+#--[ 27 ADD AFTER ] Info: $insert_add_file[register][1]-----------------------
+
+//[modif oto] - mod VSABR Very Simple AntiBot Registration - Line added
+$required_fields['captcha'] = $lang_mod_vsabr['Robot title'];
+
+
+******************************************************************************
+#-------[ 28 SAVE FILE register.php ]
+******************************************************************************
+
+#---[ 29 OPEN ]---------------------------------------------------------------
+
+    post.php
+
+#--[ 30 FIND ] Info: $search_add_file[post][0]--------------------------------
+
+	$required_fields['req_username'] = $lang_post['Guest name'];
+
+
+#--[ 31 ADD AFTER ] Info: $insert_add_file[post][0]---------------------------
+
+	//[modif oto] - mod VSABR Very Simple AntiBot Registration - Line added
+	$required_fields['captcha'] = $lang_mod_vsabr['Robot title'];
+
+
+******************************************************************************
+#-------[ 32 SAVE FILE post.php ]
+******************************************************************************
+
+======================[ END OF INSTALLATION PROCEDURE ]=======================
+
+This file was created automatically by the plugin Mod Installer
+Written by Otomatic - fluxbb.fr

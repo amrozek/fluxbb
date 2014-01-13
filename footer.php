@@ -40,7 +40,7 @@ if (isset($footer_style) && ($footer_style == 'viewforum' || $footer_style == 'v
 	{
 		echo "\t\t\t".'<dl>'."\n";
 		echo "\t\t\t\t".'<dt><strong>'.$lang_topic['Mod controls'].'</strong></dt>'."\n";
-		echo "\t\t\t\t".'<dd><span><a href="moderate.php?fid='.$forum_id.'&amp;tid='.$id.'&amp;p='.$p.'">'.$lang_common['Moderate topic'].'</a>'.($num_pages > 1 ? ' (<a href="moderate.php?fid='.$forum_id.'&amp;tid='.$id.'&amp;action=all">'.$lang_common['All'].'</a>)' : '').'</span></dd>'."\n";
+		echo "\t\t\t\t".'<dd><span><a href="moderate.php?fid='.$forum_id.'&amp;tid='.$id.'&amp;p='.$p.'">'.$lang_common['Moderate topic'].'</a></span></dd>'."\n";
 		echo "\t\t\t\t".'<dd><span><a href="moderate.php?fid='.$forum_id.'&amp;move_topics='.$id.'">'.$lang_common['Move topic'].'</a></span></dd>'."\n";
 
 		if ($cur_topic['closed'] == '1')
@@ -116,6 +116,13 @@ else if ($footer_style == 'viewtopic')
 ?>
 				<p id="poweredby"><?php printf($lang_common['Powered by'], '<a href="http://fluxbb.org/">FluxBB</a>'.(($pun_config['o_show_version'] == '1') ? ' '.$pun_config['o_cur_version'] : '')) ?></p>
 			</div>
+			<div class="clearer"></div>
+			<div id="copyright">
+				<p> Spyro and related characters are &reg; and &copy; of Activision Publishing, Inc. All rights reserved. Activision has no association with and takes no responsibility for the community fan sites to which this site is linked or the content thereon.</p>
+				<p>	This website and all of its content &copy; SpyroForum.com 2006 - 2014, All Rights Reserved.</p>
+				<p> Theme &copy; 2014 <a href="http://amrozek.com/">A. Mrozek</a></p>
+			</div>
+			<div id="fire-bottom"></div>
 			<div class="clearer"></div>
 		</div>
 	</div>

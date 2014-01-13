@@ -122,7 +122,7 @@ while ($cur_group = $db->fetch_assoc($result))
 	<h2><span><?php echo $lang_common['User list'] ?></span></h2>
 	<div class="box">
 		<div class="inbox">
-			<table>
+			<table cellspacing="0">
 			<thead>
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Username'] ?></th>
@@ -152,7 +152,8 @@ if ($db->num_rows($result))
 
 ?>
 				<tr>
-					<td class="tcl"><?php echo '<a href="profile.php?id='.$user_data['id'].'">'.pun_htmlspecialchars($user_data['username']).'</a>' ?></td>
+					<!-- Next line modified by colorize groups -->
+					<td class="tcl"><?php echo '<a href="profile.php?id='.$user_data['id'].'">'.colorize_group($user_data['username'], $user_data['g_id']).'</a>' ?></td>
 					<td class="tc2"><?php echo $user_title_field ?></td>
 <?php if ($show_post_count): ?>					<td class="tc3"><?php echo forum_number_format($user_data['num_posts']) ?></td>
 <?php endif; ?>

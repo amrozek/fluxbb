@@ -10,9 +10,9 @@ if (!defined('PUN_ROOT'))
 	exit('The constant PUN_ROOT must be defined and point to a valid FluxBB installation root directory.');
 
 // Define the version and database revision that this code was written for
-define('FORUM_VERSION', '1.5.6');
+define('FORUM_VERSION', '1.5.3');
 
-define('FORUM_DB_REVISION', 20);
+define('FORUM_DB_REVISION', 18);
 define('FORUM_SI_REVISION', 2);
 define('FORUM_PARSER_REVISION', 2);
 
@@ -162,7 +162,13 @@ else
 // Check if we are to display a maintenance message
 if ($pun_config['o_maintenance'] && $pun_user['g_id'] > PUN_ADMIN && !defined('PUN_TURN_OFF_MAINT'))
 	maintenance_message();
+	
+	// PM
+	require PUN_ROOT.'plugins/apms/common_add1.php';
 
+// added by colorize groups mod
+require PUN_ROOT.'include/colorize_groups.php';
+	
 // Load cached bans
 if (file_exists(FORUM_CACHE_DIR.'cache_bans.php'))
 	include FORUM_CACHE_DIR.'cache_bans.php';

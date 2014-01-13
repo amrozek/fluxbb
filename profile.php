@@ -52,7 +52,7 @@ if ($action == 'change_pass')
 		$cur_user = $db->fetch_assoc($result);
 
 		if ($key == '' || $key != $cur_user['activate_key'])
-			message($lang_profile['Pass key bad'].' <a href="mailto:'.pun_htmlspecialchars($pun_config['o_admin_email']).'">'.pun_htmlspecialchars($pun_config['o_admin_email']).'</a>.');
+			message($lang_profile['Pass key bad'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.');
 		else
 		{
 			$db->query('UPDATE '.$db->prefix.'users SET password=\''.$cur_user['activate_string'].'\', activate_string=NULL, activate_key=NULL'.(!empty($cur_user['salt']) ? ', salt=NULL' : '').' WHERE id='.$id) or error('Unable to update password', __FILE__, __LINE__, $db->error());
@@ -81,8 +81,8 @@ if ($action == 'change_pass')
 
 	if (isset($_POST['form_sent']))
 	{
-		// Make sure they got here from the site
-		confirm_referrer('profile.php');
+		if ($pun_user['is_admmod'])
+			confirm_referrer('profile.php');
 
 		$old_password = isset($_POST['req_old_password']) ? pun_trim($_POST['req_old_password']) : '';
 		$new_password1 = pun_trim($_POST['req_new_password1']);
@@ -183,7 +183,7 @@ else if ($action == 'change_email')
 		list($new_email, $new_email_key) = $db->fetch_row($result);
 
 		if ($key == '' || $key != $new_email_key)
-			message($lang_profile['Email key bad'].' <a href="mailto:'.pun_htmlspecialchars($pun_config['o_admin_email']).'">'.pun_htmlspecialchars($pun_config['o_admin_email']).'</a>.');
+			message($lang_profile['Email key bad'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.');
 		else
 		{
 			$db->query('UPDATE '.$db->prefix.'users SET email=activate_string, activate_string=NULL, activate_key=NULL WHERE id='.$id) or error('Unable to update email address', __FILE__, __LINE__, $db->error());
@@ -195,9 +195,6 @@ else if ($action == 'change_email')
 	{
 		if (pun_hash($_POST['req_password']) !== $pun_user['password'])
 			message($lang_profile['Wrong pass']);
-			
-		// Make sure they got here from the site
-		confirm_referrer('profile.php');
 
 		require PUN_ROOT.'include/email.php';
 
@@ -278,7 +275,7 @@ else if ($action == 'change_email')
 
 		pun_mail($new_email, $mail_subject, $mail_message);
 
-		message($lang_profile['Activate email sent'].' <a href="mailto:'.pun_htmlspecialchars($pun_config['o_admin_email']).'">'.pun_htmlspecialchars($pun_config['o_admin_email']).'</a>.', true);
+		message($lang_profile['Activate email sent'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.', true);
 	}
 
 	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_common['Profile'], $lang_profile['Change email']);
@@ -325,9 +322,6 @@ else if ($action == 'upload_avatar' || $action == 'upload_avatar2')
 	{
 		if (!isset($_FILES['req_file']))
 			message($lang_profile['No file']);
-			
-		// Make sure they got here from the site
-		confirm_referrer('profile.php');
 
 		$uploaded_file = $_FILES['req_file'];
 
@@ -374,7 +368,7 @@ else if ($action == 'upload_avatar' || $action == 'upload_avatar2')
 
 			// Move the file to the avatar directory. We do this before checking the width/height to circumvent open_basedir restrictions
 			if (!@move_uploaded_file($uploaded_file['tmp_name'], PUN_ROOT.$pun_config['o_avatars_dir'].'/'.$id.'.tmp'))
-				message($lang_profile['Move failed'].' <a href="mailto:'.pun_htmlspecialchars($pun_config['o_admin_email']).'">'.pun_htmlspecialchars($pun_config['o_admin_email']).'</a>.');
+				message($lang_profile['Move failed'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.');
 
 			list($width, $height, $type,) = @getimagesize(PUN_ROOT.$pun_config['o_avatars_dir'].'/'.$id.'.tmp');
 
@@ -464,9 +458,6 @@ else if (isset($_POST['update_group_membership']))
 
 	$new_group_id = intval($_POST['group_id']);
 
-	$result = $db->query('SELECT group_id FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user group', __FILE__, __LINE__, $db->error());
-	$old_group_id = $db->result($result);
-
 	$db->query('UPDATE '.$db->prefix.'users SET group_id='.$new_group_id.' WHERE id='.$id) or error('Unable to change user group', __FILE__, __LINE__, $db->error());
 
 	// Regenerate the users info cache
@@ -474,9 +465,6 @@ else if (isset($_POST['update_group_membership']))
 		require PUN_ROOT.'include/cache.php';
 
 	generate_users_info_cache();
-
-	if ($old_group_id == PUN_ADMIN || $new_group_id == PUN_ADMIN)
-		generate_admins_cache();
 
 	$result = $db->query('SELECT g_moderator FROM '.$db->prefix.'groups WHERE g_id='.$new_group_id) or error('Unable to fetch group', __FILE__, __LINE__, $db->error());
 	$new_group_mod = $db->result($result);
@@ -494,11 +482,37 @@ else if (isset($_POST['update_group_membership']))
 			{
 				$username = array_search($id, $cur_moderators);
 				unset($cur_moderators[$username]);
+				// colorize groups
+				unset($cur_moderators['groups'][$id]);
+				if (empty($cur_moderators['groups']))
+					unset($cur_moderators['groups']);
+				// colorize groups
 				$cur_moderators = (!empty($cur_moderators)) ? '\''.$db->escape(serialize($cur_moderators)).'\'' : 'NULL';
 
 				$db->query('UPDATE '.$db->prefix.'forums SET moderators='.$cur_moderators.' WHERE id='.$cur_forum['id']) or error('Unable to update forum', __FILE__, __LINE__, $db->error());
 			}
 		}
+		
+	// colorize groups	
+	}
+
+	// Else update moderator's group_id
+	else
+	{
+		$result = $db->query('SELECT id, moderators FROM '.$db->prefix.'forums') or error('Unable to fetch forum list', __FILE__, __LINE__, $db->error());
+
+		while ($cur_forum = $db->fetch_assoc($result))
+		{
+			$cur_moderators = ($cur_forum['moderators'] != '') ? unserialize($cur_forum['moderators']) : array();
+
+			if (in_array($id, $cur_moderators))
+			{
+				$cur_moderators['groups'][$id] = $new_group_id;
+				$db->query('UPDATE '.$db->prefix.'forums SET moderators=\''.$db->escape(serialize($cur_moderators)).'\' WHERE id='.$cur_forum['id']) or error('Unable to update forum', __FILE__, __LINE__, $db->error());
+			}
+		}	
+	// colorize groups
+	
 	}
 
 	redirect('profile.php?section=admin&amp;id='.$id, $lang_profile['Group membership redirect']);
@@ -512,9 +526,10 @@ else if (isset($_POST['update_forums']))
 
 	confirm_referrer('profile.php');
 
-	// Get the username of the user we are processing
-	$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-	$username = $db->result($result);
+	// Get the username of the user we are processing - modified by colorize groups
+	$result = $db->query('SELECT username, group_id FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+	list($username, $group_id) = $db->fetch_row($result);
+
 
 	$moderator_in = (isset($_POST['moderator_in'])) ? array_keys($_POST['moderator_in']) : array();
 
@@ -524,6 +539,16 @@ else if (isset($_POST['update_forums']))
 	while ($cur_forum = $db->fetch_assoc($result))
 	{
 		$cur_moderators = ($cur_forum['moderators'] != '') ? unserialize($cur_forum['moderators']) : array();
+		
+		// colorize groups
+		if (in_array($cur_forum['id'], $moderator_in) || in_array($id, $cur_moderators))
+		{
+			if (!isset($cur_moderators['groups']))
+				$cur_moderators['groups'] = array();
+			$cur_moderators['groups'][$id] = $group_id;
+		}
+		// colorize groups	
+		
 		// If the user should have moderator access (and he/she doesn't already have it)
 		if (in_array($cur_forum['id'], $moderator_in) && !in_array($id, $cur_moderators))
 		{
@@ -536,10 +561,21 @@ else if (isset($_POST['update_forums']))
 		else if (!in_array($cur_forum['id'], $moderator_in) && in_array($id, $cur_moderators))
 		{
 			unset($cur_moderators[$username]);
+			//colorize groups
+			unset($cur_moderators['groups'][$id]);
+			if (empty($cur_moderators['groups']))
+					unset($cur_moderators['groups']);
+			//colorize groups
 			$cur_moderators = (!empty($cur_moderators)) ? '\''.$db->escape(serialize($cur_moderators)).'\'' : 'NULL';
 
 			$db->query('UPDATE '.$db->prefix.'forums SET moderators='.$cur_moderators.' WHERE id='.$cur_forum['id']) or error('Unable to update forum', __FILE__, __LINE__, $db->error());
 		}
+		
+		//colorize groups
+		elseif (in_array($cur_forum['id'], $moderator_in) || in_array($id, $cur_moderators))
+			$db->query('UPDATE '.$db->prefix.'forums SET moderators=\''.$db->escape(serialize($cur_moderators)).'\' WHERE id='.$cur_forum['id']) or error('Unable to update forum', __FILE__, __LINE__, $db->error());
+		// colorize groups
+		
 	}
 
 	redirect('profile.php?section=admin&amp;id='.$id, $lang_profile['Update forums redirect']);
@@ -567,22 +603,29 @@ else if (isset($_POST['ban']))
 }
 
 
-else if (isset($_POST['delete_user']) || isset($_POST['delete_user_comply']))
-{
+else if (isset($_POST['delete_user']) || isset($_POST['delete_spammer']) || isset($_POST['delete_user_comply']) || isset($_POST['delete_spammer_comply'])){
 	if ($pun_user['g_id'] > PUN_ADMIN)
 		message($lang_common['No permission'], false, '403 Forbidden');
 
 	confirm_referrer('profile.php');
 
 	// Get the username and group of the user we are deleting
-	$result = $db->query('SELECT group_id, username FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
-	list($group_id, $username) = $db->fetch_row($result);
+	$result = $db->query('SELECT group_id, username, email, registration_ip FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+	list($group_id, $username, $email, $registration_ip) = $db->fetch_row($result);
 
 	if ($group_id == PUN_ADMIN)
 		message($lang_profile['No delete admin message']);
 
-	if (isset($_POST['delete_user_comply']))
+	if (isset($_POST['delete_user_comply']) || isset($_POST['delete_spammer_comply']))
 	{
+		if (isset($_POST['delete_spammer_comply']))
+		{
+			// Include the antispam library
+			require PUN_ROOT.'include/nospam.php';
+
+  			// Lets report the bastard!
+  			stopforumspam_report($registration_ip, $email, $username);
+		}
 		// If the user is a moderator or an administrator, we remove him/her from the moderator list in all forums as well
 		$result = $db->query('SELECT g_moderator FROM '.$db->prefix.'groups WHERE g_id='.$group_id) or error('Unable to fetch group', __FILE__, __LINE__, $db->error());
 		$group_mod = $db->result($result);
@@ -642,7 +685,7 @@ else if (isset($_POST['delete_user']) || isset($_POST['delete_user_comply']))
 
 		// Delete the user
 		$db->query('DELETE FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to delete user', __FILE__, __LINE__, $db->error());
-
+		
 		// Delete user avatar
 		delete_avatar($id);
 
@@ -652,10 +695,9 @@ else if (isset($_POST['delete_user']) || isset($_POST['delete_user_comply']))
 
 		generate_users_info_cache();
 
-		if ($group_id == PUN_ADMIN)
-			generate_admins_cache();
-
+		require PUN_ROOT.'plugins/apms/profile_add1.php';
 		redirect('index.php', $lang_profile['User delete redirect']);
+//		redirect('index.php', isset($_POST['delete_spammer_comply']) ? $lang_profile['Spammer delete redirect'] : $lang_profile['User delete redirect']);
 	}
 
 	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_common['Profile'], $lang_profile['Confirm delete user']);
@@ -675,11 +717,15 @@ else if (isset($_POST['delete_user']) || isset($_POST['delete_user_comply']))
 						<div class="rbox">
 							<label><input type="checkbox" name="delete_posts" value="1" checked="checked" /><?php echo $lang_profile['Delete posts'] ?><br /></label>
 						</div>
-						<p class="warntext"><strong><?php echo $lang_profile['Delete warning'] ?></strong></p>
+						<?php if (isset($_POST['delete_spammer'])): ?>						
+							<p><?php echo $lang_profile['Delete spammer note'] ?></p>
+						<?php endif; ?>						
+						<p class="warntext"><strong>
+						<?php echo $lang_profile['Delete warning'] ?></strong></p>
 					</div>
 				</fieldset>
 			</div>
-			<p class="buttons"><input type="submit" name="delete_user_comply" value="<?php echo $lang_profile['Delete'] ?>" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+			<p class="buttons"><input type="submit" name="<?php echo (isset($_POST['delete_spammer']) ? 'delete_spammer_comply' : 'delete_user_comply'); ?>" value="<?php echo $lang_profile['Delete'] ?>" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>
 </div>
@@ -706,8 +752,8 @@ else if (isset($_POST['form_sent']))
 		$is_moderator))))																			// or the user is another mod
 		message($lang_common['No permission'], false, '403 Forbidden');
 
-	// Make sure they got here from the site
-	confirm_referrer('profile.php');
+	if ($pun_user['is_admmod'])
+		confirm_referrer('profile.php');
 
 	$username_updated = false;
 
@@ -779,6 +825,19 @@ else if (isset($_POST['form_sent']))
 				'realname'		=> isset($_POST['form']['realname']) ? pun_trim($_POST['form']['realname']) : '',
 				'url'			=> isset($_POST['form']['url']) ? pun_trim($_POST['form']['url']) : '',
 				'location'		=> isset($_POST['form']['location']) ? pun_trim($_POST['form']['location']) : '',
+				
+				// anniversaire
+				'anniversairej' => isset($_POST['form']['anniversairej']) ? pun_trim($_POST['form']['anniversairej']) : '',
+				'anniversairem' => isset($_POST['form']['anniversairem']) ? pun_trim($_POST['form']['anniversairem']) : '',
+				'anniversairea' => isset($_POST['form']['anniversairea']) ? pun_trim($_POST['form']['anniversairea']) : '',
+				'anniversaire_enabled' => isset($_POST['form']['anniversaire_enabled']) ? pun_trim($_POST['form']['anniversaire_enabled']) : '',
+				'age_enabled' 	=> isset($_POST['form']['age_enabled']) ? pun_trim($_POST['form']['age_enabled']) : '',
+				
+				// gender mod
+				'gender' => isset($_POST['form']['gender']) ? pun_trim($_POST['form']['gender']) : '',
+				'gender_enabled' => isset($_POST['form']['gender_enabled']) ? pun_trim($_POST['form']['gender_enabled']) : '',
+
+
 			);
 
 			// Add http:// if the URL doesn't contain it already (while allowing https://, too)
@@ -921,6 +980,12 @@ else if (isset($_POST['form_sent']))
 				'email_setting'			=> intval($_POST['form']['email_setting']),
 				'notify_with_post'		=> isset($_POST['form']['notify_with_post']) ? '1' : '0',
 				'auto_notify'			=> isset($_POST['form']['auto_notify']) ? '1' : '0',
+				
+				// PM 
+				'use_pm'				=> isset($_POST['form']['use_pm']) ? '1' : '0',
+				'notify_pm'				=> isset($_POST['form']['notify_pm']) ? '1' : '0',
+				'notify_pm_full'				=> isset($_POST['form']['notify_pm_full']) ? '1' : '0',
+				// PM
 			);
 
 			if ($form['email_setting'] < 0 || $form['email_setting'] > 2)
@@ -930,7 +995,7 @@ else if (isset($_POST['form_sent']))
 		}
 
 		default:
-			message($lang_common['Bad request'], false, '404 Not Found');
+			message($lang_common['Bad request']);
 	}
 
 
@@ -944,7 +1009,7 @@ else if (isset($_POST['form_sent']))
 	}
 
 	if (empty($temp))
-		message($lang_common['Bad request'], false, '404 Not Found');
+		message($lang_common['Bad request']);
 
 
 	$db->query('UPDATE '.$db->prefix.'users SET '.implode(',', $temp).' WHERE id='.$id) or error('Unable to update profile', __FILE__, __LINE__, $db->error());
@@ -963,6 +1028,9 @@ else if (isset($_POST['form_sent']))
 		$db->query('UPDATE '.$db->prefix.'forums SET last_poster=\''.$db->escape($form['username']).'\' WHERE last_poster=\''.$db->escape($old_username).'\'') or error('Unable to update forums', __FILE__, __LINE__, $db->error());
 		$db->query('UPDATE '.$db->prefix.'online SET ident=\''.$db->escape($form['username']).'\' WHERE ident=\''.$db->escape($old_username).'\'') or error('Unable to update online list', __FILE__, __LINE__, $db->error());
 
+		// PM
+		require PUN_ROOT.'plugins/apms/profile_add6.php';
+		
 		// If the user is a moderator or an administrator we have to update the moderator lists
 		$result = $db->query('SELECT group_id FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 		$group_id = $db->result($result);
@@ -1003,8 +1071,8 @@ else if (isset($_POST['form_sent']))
 	redirect('profile.php?section='.$section.'&amp;id='.$id, $lang_profile['Profile redirect']);
 }
 
-
-$result = $db->query('SELECT u.username, u.email, u.title, u.realname, u.url, u.jabber, u.icq, u.msn, u.aim, u.yahoo, u.location, u.signature, u.disp_topics, u.disp_posts, u.email_setting, u.notify_with_post, u.auto_notify, u.show_smilies, u.show_img, u.show_img_sig, u.show_avatars, u.show_sig, u.timezone, u.dst, u.language, u.style, u.num_posts, u.last_post, u.registered, u.registration_ip, u.admin_note, u.date_format, u.time_format, u.last_visit, g.g_id, g.g_user_title, g.g_moderator FROM '.$db->prefix.'users AS u LEFT JOIN '.$db->prefix.'groups AS g ON g.g_id=u.group_id WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+//next line modified by anniversaire and gender mods
+$result = $db->query('SELECT u.username, u.email, u.title, u.realname, u.url, u.jabber, u.icq, u.msn, u.aim, u.yahoo, u.location, u.signature, u.disp_topics, u.disp_posts, u.email_setting, u.notify_with_post, u.notify_pm, u.notify_pm_full, u.use_pm, u.auto_notify, u.show_smilies, u.show_img, u.show_img_sig, u.show_avatars, u.show_sig, u.timezone, u.dst, u.language, u.style, u.num_posts, u.last_post, u.registered, u.registration_ip, u.admin_note, u.anniversairej, u.anniversairem, u.anniversairea, u.anniversaire_enabled, u.age_enabled, u.gender, u.gender_enabled, u.date_format, u.time_format, u.last_visit, g.g_id, g.g_user_title, g.g_moderator FROM '.$db->prefix.'users AS u LEFT JOIN '.$db->prefix.'groups AS g ON g.g_id=u.group_id WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 if (!$db->num_rows($result))
 	message($lang_common['Bad request'], false, '404 Not Found');
 
@@ -1030,7 +1098,8 @@ if ($pun_user['id'] != $id &&																	// If we aren't the user (i.e. edi
 	$user_personal = array();
 
 	$user_personal[] = '<dt>'.$lang_common['Username'].'</dt>';
-	$user_personal[] = '<dd>'.pun_htmlspecialchars($user['username']).'</dd>';
+	// colorize groups
+	$user_personal[] = '<dd>'.colorize_group($user['username'], $user['g_id']).'</dd>';
 
 	$user_title_field = get_title($user);
 	$user_personal[] = '<dt>'.$lang_common['Title'].'</dt>';
@@ -1056,7 +1125,7 @@ if ($pun_user['id'] != $id &&																	// If we aren't the user (i.e. edi
 	}
 
 	if ($user['email_setting'] == '0' && !$pun_user['is_guest'] && $pun_user['g_send_email'] == '1')
-		$email_field = '<a href="mailto:'.pun_htmlspecialchars($user['email']).'">'.pun_htmlspecialchars($user['email']).'</a>';
+		$email_field = '<a href="mailto:'.$user['email'].'">'.$user['email'].'</a>';
 	else if ($user['email_setting'] == '1' && !$pun_user['is_guest'] && $pun_user['g_send_email'] == '1')
 		$email_field = '<a href="misc.php?email='.$id.'">'.$lang_common['Send email'].'</a>';
 	else
@@ -1067,6 +1136,9 @@ if ($pun_user['id'] != $id &&																	// If we aren't the user (i.e. edi
 		$user_personal[] = '<dd><span class="email">'.$email_field.'</span></dd>';
 	}
 
+	// PM
+	require PUN_ROOT.'plugins/apms/profile_add3.php';
+	
 	$user_messaging = array();
 
 	if ($user['jabber'] != '')
@@ -1227,14 +1299,18 @@ else
 			else
 				$username_field = '<p>'.sprintf($lang_profile['Username info'], pun_htmlspecialchars($user['username'])).'</p>'."\n";
 
-			$email_field = '<label class="required"><strong>'.$lang_common['Email'].' <span>'.$lang_common['Required'].'</span></strong><br /><input type="text" name="req_email" value="'.pun_htmlspecialchars($user['email']).'" size="40" maxlength="80" /><br /></label><p><span class="email"><a href="misc.php?email='.$id.'">'.$lang_common['Send email'].'</a></span></p>'."\n";
+			$email_field = '<label class="required"><strong>'.$lang_common['Email'].' <span>'.$lang_common['Required'].'</span></strong><br /><input type="text" name="req_email" value="'.$user['email'].'" size="40" maxlength="80" /><br /></label><p><span class="email"><a href="misc.php?email='.$id.'">'.$lang_common['Send email'].'</a></span></p>'."\n";
+
+			// PM
+			require PUN_ROOT.'plugins/apms/profile_add4.php';
+			
 		}
 		else
 		{
 			$username_field = '<p>'.$lang_common['Username'].': '.pun_htmlspecialchars($user['username']).'</p>'."\n";
 
 			if ($pun_config['o_regs_verify'] == '1')
-				$email_field = '<p>'.sprintf($lang_profile['Email info'], pun_htmlspecialchars($user['email']).' - <a href="profile.php?action=change_email&amp;id='.$id.'">'.$lang_profile['Change email'].'</a>').'</p>'."\n";
+				$email_field = '<p>'.sprintf($lang_profile['Email info'], $user['email'].' - <a href="profile.php?action=change_email&amp;id='.$id.'">'.$lang_profile['Change email'].'</a>').'</p>'."\n";
 			else
 				$email_field = '<label class="required"><strong>'.$lang_common['Email'].' <span>'.$lang_common['Required'].'</span></strong><br /><input type="text" name="req_email" value="'.$user['email'].'" size="40" maxlength="80" /><br /></label>'."\n";
 		}
@@ -1453,6 +1529,65 @@ else
 <?php if (isset($title_field)): ?>							<?php echo $title_field ?>
 <?php endif; ?>							<label><?php echo $lang_profile['Location'] ?><br /><input type="text" name="form[location]" value="<?php echo pun_htmlspecialchars($user['location']) ?>" size="30" maxlength="30" /><br /></label>
 <?php if ($pun_user['g_post_links'] == '1' || $pun_user['g_id'] == PUN_ADMIN) : ?>							<label><?php echo $lang_profile['Website'] ?><br /><input type="text" name="form[url]" value="<?php echo pun_htmlspecialchars($user['url']) ?>" size="50" maxlength="80" /><br /></label>
+
+<br /><br />
+
+<!--mod anniversaire --><label><?php echo $lang_profile['Date of Birth'] ?><br /></label><select name="form[anniversairej]">
+                            <?php    
+     $j = 1; //on définit la variable $j qui sera notre nombre que l'on incrémentera. Ici $j va commencer à 0
+     while($j < 32)
+     {
+           echo '<option value="'.$j.'"'.( ($user['anniversairej'] == $j) ? ' selected="selected"' : '' ).'>'.$j.'</option>';
+
+           $j++;
+     }
+?></select>
+							
+								<select name="form[anniversairem]">
+								<option value="01"<?php if ($user['anniversairem'] == 1) echo ' selected="selected"' ?>><?php echo $lang_profile['January'] ?></option>
+								<option value="02"<?php if ($user['anniversairem'] == 2) echo ' selected="selected"' ?>><?php echo $lang_profile['February'] ?></option>
+								<option value="03"<?php if ($user['anniversairem'] == 3) echo ' selected="selected"' ?>><?php echo $lang_profile['March'] ?></option>
+								<option value="04"<?php if ($user['anniversairem'] == 4) echo ' selected="selected"' ?>><?php echo $lang_profile['April'] ?></option>
+								<option value="05"<?php if ($user['anniversairem'] == 5) echo ' selected="selected"' ?>><?php echo $lang_profile['May'] ?></option>
+								<option value="06"<?php if ($user['anniversairem'] == 6) echo ' selected="selected"' ?>><?php echo $lang_profile['June'] ?></option>
+								<option value="07"<?php if ($user['anniversairem'] == 7) echo ' selected="selected"' ?>><?php echo $lang_profile['July'] ?></option>
+								<option value="08"<?php if ($user['anniversairem'] == 8) echo ' selected="selected"' ?>><?php echo $lang_profile['August'] ?></option>
+								<option value="09"<?php if ($user['anniversairem'] == 9) echo ' selected="selected"' ?>><?php echo $lang_profile['September'] ?></option>
+								<option value="10"<?php if ($user['anniversairem'] == 10) echo ' selected="selected"' ?>><?php echo $lang_profile['October'] ?></option>
+								<option value="11"<?php if ($user['anniversairem'] == 11) echo ' selected="selected"' ?>><?php echo $lang_profile['November'] ?></option>
+								<option value="12"<?php if ($user['anniversairem'] == 12) echo ' selected="selected"' ?>><?php echo $lang_profile['December'] ?></option>
+								</select>
+								
+								<select name="form[anniversairea]">
+                            <?php    
+     $a = 1; //on définit la variable $a qui sera notre nombre que l'on incrémentera. Ici $a va commencer à 2011
+     $years = date("Y");
+	 while($a < 151)
+     {
+           echo '<option value="'.$years.'"'.( ($user['anniversairea'] == $years) ? ' selected="selected"' : '' ).'>'.$years.'</option>';
+			
+		   $years--;
+           $a++;
+     }
+?></select><br />
+								<br />
+								<label><input type="checkbox" name="form[anniversaire_enabled]" value="1"<?php if ($user['anniversaire_enabled'] == '1') echo ' checked="checked"' ?> /> <?php echo $lang_profile['Display_birth'] ?><br /></label>
+								<label><input type="checkbox" name="form[age_enabled]" value="1"<?php if ($user['age_enabled'] == '1') echo ' checked="checked"' ?> /> <?php echo $lang_profile['Display_age'] ?><br /></label>
+								<br />
+							<!--fin mod anniversaire -->
+
+						<!-- Gender mod -->
+							<label>Gender<br /></label>
+							<select name="form[gender]">
+								<option value="0"<?php if ($user['gender'] == 0) echo ' selected="selected"' ?>><?php echo $lang_profile['Male'] ?></option>
+								<option value="1"<?php if ($user['gender'] == 1) echo ' selected="selected"' ?>><?php echo $lang_profile['Female'] ?></option>
+								<option value="2"<?php if ($user['gender'] == 2) echo ' selected="selected"' ?>><?php echo $lang_profile['Other'] ?></option>
+							</select>
+							<br /><br />
+							<label><input type="checkbox" name="form[gender_enabled]" value="1"<?php if ($user['gender_enabled'] == '1') echo ' checked="checked"' ?> /> <?php echo $lang_profile['Display_gender'] ?><br /></label>
+						<!-- End Gender mod -->
+
+
 <?php endif; ?>
 						</div>
 					</fieldset>
@@ -1501,7 +1636,7 @@ else
 	else if ($section == 'personality')
 	{
 		if ($pun_config['o_avatars'] == '0' && $pun_config['o_signatures'] == '0')
-			message($lang_common['Bad request'], false, '404 Not Found');
+			message($lang_common['Bad request']);
 
 		$avatar_field = '<span><a href="profile.php?action=upload_avatar&amp;id='.$id.'">'.$lang_profile['Change avatar'].'</a></span>';
 
@@ -1691,7 +1826,12 @@ else
 						</div>
 					</fieldset>
 				</div>
-<?php endif; ?>				<p class="buttons"><input type="submit" name="update" value="<?php echo $lang_common['Submit'] ?>" /> <?php echo $lang_profile['Instructions'] ?></p>
+<?php endif; ?>				
+	
+		<!-- PM -->
+		<?php require PUN_ROOT.'plugins/apms/profile_add5.php'; ?>
+		
+		<p class="buttons"><input type="submit" name="update" value="<?php echo $lang_common['Submit'] ?>" /> <?php echo $lang_profile['Instructions'] ?></p>
 			</form>
 		</div>
 	</div>
@@ -1768,7 +1908,7 @@ else
 ?>
 						<legend><?php echo $lang_profile['Delete ban legend'] ?></legend>
 						<div class="infldset">
-							<input type="submit" name="delete_user" value="<?php echo $lang_profile['Delete user'] ?>" /> <input type="submit" name="ban" value="<?php echo $lang_profile['Ban user'] ?>" />
+							<input type="submit" name="delete_user" value="<?php echo $lang_profile['Delete user'] ?>" /> <input type="submit" name="delete_spammer" value="<?php echo $lang_profile['Delete spammer'] ?>" /> <input type="submit" name="ban" value="<?php echo $lang_profile['Ban user'] ?>" />
 						</div>
 					</fieldset>
 				</div>
@@ -1827,7 +1967,7 @@ else
 
 	}
 	else
-		message($lang_common['Bad request'], false, '404 Not Found');
+		message($lang_common['Bad request']);
 
 ?>
 	<div class="clearer"></div>

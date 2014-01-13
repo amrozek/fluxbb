@@ -13,6 +13,33 @@ $lang_register = array(
 'Cancel'					=>	'Cancel',
 'Register'					=>	'Register',
 
+//mod anniversaire
+'Define PI'			=> 'Define your personal information',
+'Date of Birth'		=> 'Date of Birth',
+'Display_birth'		=> 'Show your birthday',
+'Display_age'		=> 'Show your age',
+'January'			=> 'January',
+'February'			=> 'February',	
+'March'				=> 'March',
+'April'				=> 'April',
+'May'				=> 'May',
+'June'				=> 'June',
+'July'				=> 'July',
+'August'			=> 'August',
+'September'			=> 'September',
+'October'			=> 'October',
+'November'			=> 'November',
+'December'			=> 'December',
+//fin mod anniversaire
+
+// gender mod
+'Gender'			=> 'Gender',
+'Display_gender'	=> 'Show your gender',
+'Male'				=> 'Male',
+'Female'			=> 'Female',
+'Other' 			=> 'Other',
+// gender mod
+
 // Form validation stuff (some of these are also used in post.php)
 'Registration errors'		=>	'Registration errors',
 'Registration errors info'	=>	'The following errors need to be corrected before you can register:',
@@ -33,5 +60,6 @@ $lang_register = array(
 'Pass info'					=>	'Passwords must be at least 4 characters long. Passwords are case sensitive.',
 'Email info'				=>	'You must enter a valid email address as your randomly generated password will be sent to that address.',
 'Confirm email'				=>	'Confirm email address',
-
+'If human'					=>	'If you are human please leave this field blank!',
+'Spam catch'				=>	'Unfortunately it looks like your request is spam. If you feel this is a mistake, please direct any inquiries to the forum administrator at',
 );
