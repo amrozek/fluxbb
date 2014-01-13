@@ -8,6 +8,9 @@
 
 define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
+// Poll mod
+require PUN_ROOT.'include/ap_poll.php';
+
 
 
 if ($pun_user['g_read_board'] == '0')
@@ -37,6 +40,7 @@ if ($cur_posting['redirect_url'] != '')
 
 // Sort out who the moderators are and if we are currently a moderator (or an admin)
 $mods_array = ($cur_posting['moderators'] != '') ? unserialize($cur_posting['moderators']) : array();
+
 $is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_moderator'] == '1' && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
 
 if ($tid && $pun_config['o_censoring'] == '1')
@@ -49,6 +53,13 @@ if ((($tid && (($cur_posting['post_replies'] == '' && $pun_user['g_post_replies'
 	!$is_admmod)
 	message($lang_common['No permission'], false, '403 Forbidden');
 
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
 // Load the post.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/post.php';
 
@@ -59,6 +70,17 @@ $errors = array();
 // Did someone just hit "Submit" or "Preview"?
 if (isset($_POST['form_sent']))
 {
+//[modif oto] - mod VSABR Very Simple AntiBot Registration - Validate  answer to the question
+if($pun_user['is_guest']) {
+	$mod_vsabr_p_question = isset($_POST['captcha_q']) ? trim($_POST['captcha_q']) : '';
+	$mod_vsabr_p_answer = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
+	$mod_vsabr_questions_array = array();
+	foreach ($mod_vsabr_questions as $k => $v)
+  	$mod_vsabr_questions_array[md5($k)] = $v;
+	if (empty($mod_vsabr_questions_array[$mod_vsabr_p_question]) || $mod_vsabr_questions_array[$mod_vsabr_p_question] != $mod_vsabr_p_answer)
+  	$errors[] = $lang_mod_vsabr['Robot test fail'];
+}
+//[modif oto] - End mod VSABR
 	// Flood protection
 	if (!isset($_POST['preview']) && $pun_user['last_post'] != '' && (time() - $pun_user['last_post']) < $pun_user['g_post_flood'])
 		$errors[] = sprintf($lang_post['Flood start'], $pun_user['g_post_flood'], $pun_user['g_post_flood'] - (time() - $pun_user['last_post']));
@@ -157,6 +179,9 @@ if (isset($_POST['form_sent']))
 	$message = strip_bad_multibyte_chars($message);
 
 	$now = time();
+	// AP Poll
+	ap_poll_form_validate($errors);
+	// /AP Poll
 
 	// Did everything go according to plan?
 	if (empty($errors) && !isset($_POST['preview']))
@@ -309,6 +334,9 @@ if (isset($_POST['form_sent']))
 			update_search_index('post', $new_pid, $message, $subject);
 
 			update_forum($fid);
+			// AP Poll
+			ap_poll_save($new_tid);
+			// /AP Poll
 
 			// Should we send out notifications?
 			if ($pun_config['o_forum_subscriptions'] == '1')
@@ -430,7 +458,7 @@ if (isset($_POST['form_sent']))
 		{
 			$db->query('UPDATE '.$db->prefix.'online SET last_post='.$now.' WHERE ident=\''.$db->escape(get_remote_address()).'\'' ) or error('Unable to update user', __FILE__, __LINE__, $db->error());
 		}
-
+	
 		redirect('viewtopic.php?pid='.$new_pid.'#p'.$new_pid, $lang_post['Post redirect']);
 	}
 }
@@ -535,6 +563,8 @@ if (!$pun_user['is_guest'])
 else
 {
 	$required_fields['req_username'] = $lang_post['Guest name'];
+	//[modif oto] - mod VSABR Very Simple AntiBot Registration - Line added
+	$required_fields['captcha'] = $lang_mod_vsabr['Robot title'];
 	$focus_element[] = 'req_username';
 }
 
@@ -542,8 +572,10 @@ define('PUN_ACTIVE_PAGE', 'index');
 require PUN_ROOT.'header.php';
 
 ?>
+
 <div class="linkst">
 	<div class="inbox">
+	
 		<ul class="crumbs">
 			<li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li>
 			<li><span>»&#160;</span><a href="viewforum.php?id=<?php echo $cur_posting['id'] ?>"><?php echo pun_htmlspecialchars($cur_posting['forum_name']) ?></a></li>
@@ -634,7 +666,7 @@ if ($pun_user['is_guest'])
 
 if ($fid): ?>
 						<label class="required"><strong><?php echo $lang_common['Subject'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br /><input class="longinput" type="text" name="req_subject" value="<?php if (isset($_POST['req_subject'])) echo pun_htmlspecialchars($subject); ?>" size="80" maxlength="70" tabindex="<?php echo $cur_index++ ?>" /><br /></label>
-<?php endif; ?>						<label class="required"><strong><?php echo $lang_common['Message'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br />
+<?php endif; require PUN_ROOT.'mod_easy_bbcode.php'; ?>						<label class="required"><strong><?php echo $lang_common['Message'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br />
 						<textarea name="req_message" rows="20" cols="95" tabindex="<?php echo $cur_index++ ?>"><?php echo isset($_POST['req_message']) ? pun_htmlspecialchars($orig_message) : (isset($quote) ? $quote : ''); ?></textarea><br /></label>
 						<ul class="bblinks">
 							<li><span><a href="help.php#bbcode" onclick="window.open(this.href); return false;"><?php echo $lang_common['BBCode'] ?></a> <?php echo ($pun_config['p_message_bbcode'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
@@ -680,6 +712,11 @@ if (!empty($checkboxes))
 
 ?>
 			</div>
+			
+			<!-- AP Poll -->
+			<?php ap_poll_form_post($tid); ?>
+			<!-- /AP Poll -->
+			
 			<div class="inform">
 				<fieldset>
 					<legend><?php echo $lang_common['Options'] ?></legend>
@@ -695,7 +732,25 @@ if (!empty($checkboxes))
 
 ?>
 			</div>
-			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+			<?php //[modif oto] - mod VSABR Very Simple AntiBot Registration
+if($pun_user['is_guest']) : ?>
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><br	/>
+			</label>
+		</div>
+	</fieldset>
+</div>
+<?php endif; //[modif oto] - End mod VSABR ?>
+<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>
 </div>
@@ -707,7 +762,8 @@ if ($tid && $pun_config['o_topic_review'] != '0')
 {
 	require_once PUN_ROOT.'include/parser.php';
 
-	$result = $db->query('SELECT poster, message, hide_smilies, posted FROM '.$db->prefix.'posts WHERE topic_id='.$tid.' ORDER BY id DESC LIMIT '.$pun_config['o_topic_review']) or error('Unable to fetch topic review', __FILE__, __LINE__, $db->error());
+	// modified by colorize groups
+	$result = $db->query('SELECT p.poster, p.message, p.hide_smilies, p.posted, u.group_id FROM '.$db->prefix.'posts AS p LEFT JOIN '.$db->prefix.'users AS u ON (p.poster=u.username) WHERE p.topic_id='.$tid.' ORDER BY p.id DESC LIMIT '.$pun_config['o_topic_review']) or error('Unable to fetch topic review', __FILE__, __LINE__, $db->error());;
 
 ?>
 
@@ -731,7 +787,8 @@ if ($tid && $pun_config['o_topic_review'] != '0')
 				<div class="postbody">
 					<div class="postleft">
 						<dl>
-							<dt><strong><?php echo pun_htmlspecialchars($cur_post['poster']) ?></strong></dt>
+							<!-- Next line modified by colorize groups -->
+							<dt><strong><?php echo colorize_group($cur_post['poster'], $cur_post['group_id']) ?></strong></dt>
 							<dd><span><?php echo format_time($cur_post['posted']) ?></span></dd>
 						</dl>
 					</div>

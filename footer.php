@@ -117,6 +117,13 @@ else if ($footer_style == 'viewtopic')
 				<p id="poweredby"><?php printf($lang_common['Powered by'], '<a href="http://fluxbb.org/">FluxBB</a>'.(($pun_config['o_show_version'] == '1') ? ' '.$pun_config['o_cur_version'] : '')) ?></p>
 			</div>
 			<div class="clearer"></div>
+			<div id="copyright">
+				<p> Spyro and related characters are &reg; and &copy; of Activision Publishing, Inc. All rights reserved. Activision has no association with and takes no responsibility for the community fan sites to which this site is linked or the content thereon.</p>
+				<p>	This website and all of its content &copy; SpyroForum.com 2006 - 2014, All Rights Reserved.</p>
+				<p> Theme &copy; 2014 <a href="http://amrozek.com/">A. Mrozek</a></p>
+			</div>
+			<div id="fire-bottom"></div>
+			<div class="clearer"></div>
 		</div>
 	</div>
 </div>

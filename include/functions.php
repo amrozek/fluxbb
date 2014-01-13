@@ -709,6 +709,11 @@ function delete_topic($topic_id)
 
 	// Delete any subscriptions for this topic
 	$db->query('DELETE FROM '.$db->prefix.'topic_subscriptions WHERE topic_id='.$topic_id) or error('Unable to delete subscriptions', __FILE__, __LINE__, $db->error());
+	// AP Poll
+	require_once PUN_ROOT.'include/ap_poll.php';  // THIS WAS CHANGED
+	ap_poll_delete($topic_id);
+	// /AP Poll
+	
 }
 
 
@@ -898,7 +903,9 @@ function paginate($num_pages, $cur_page, $link)
 //
 function message($message, $no_back_link = false, $http_status = null)
 {
-	global $db, $lang_common, $pun_config, $pun_start, $tpl_main, $pun_user;
+	
+	// Modified by PM
+	global $db, $lang_common, $lang_pms, $pun_config, $pun_start, $tpl_main, $pun_user;
 
 	// Did we receive a custom header?
 	if(!is_null($http_status)) {

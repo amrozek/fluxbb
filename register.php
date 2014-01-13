@@ -17,6 +17,13 @@ if (!$pun_user['is_guest'])
 	exit;
 }
 
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
 // Load the register.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/register.php';
 
@@ -25,6 +32,10 @@ require PUN_ROOT.'lang/'.$pun_user['language'].'/prof_reg.php';
 
 if ($pun_config['o_regs_allow'] == '0')
 	message($lang_register['No new regs']);
+//[modif oto] - VSABR Very Simple Anti Bot Registration
+//If the hidden field username contains something is that it was completed by a BOT.
+if(!empty($_REQUEST['username']))
+  message($lang_register['No new regs']);
 
 
 // User pressed the cancel button
@@ -66,13 +77,13 @@ $errors = array();
 if (isset($_POST['form_sent']))
 {
 	// Check that someone from this IP didn't register a user within the last hour (DoS prevention)
-	$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.$db->escape(get_remote_address()).'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+	//$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.$db->escape(get_remote_address()).'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 	if ($db->num_rows($result))
 		message($lang_register['Registration flood']);
 
 
-	$username = pun_trim($_POST['req_user']);
+	$username = pun_trim($_POST['req_honeypot']);
 	$email1 = strtolower(pun_trim($_POST['req_email1']));
 
 	if ($pun_config['o_regs_verify'] == '1')
@@ -96,6 +107,15 @@ if (isset($_POST['form_sent']))
 	else if ($password1 != $password2)
 		$errors[] = $lang_prof_reg['Pass not match'];
 
+//[modif oto] - mod VSABR Very Simple AntiBot Registration - Validate  answer to the question
+$mod_vsabr_p_question = isset($_POST['captcha_q']) ? trim($_POST['captcha_q']) : '';
+$mod_vsabr_p_answer = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
+$mod_vsabr_questions_array = array();
+foreach ($mod_vsabr_questions as $k => $v)
+  $mod_vsabr_questions_array[md5($k)] = $v;
+if (empty($mod_vsabr_questions_array[$mod_vsabr_p_question]) || $mod_vsabr_questions_array[$mod_vsabr_p_question] != $mod_vsabr_p_answer)
+  $errors[] = $lang_mod_vsabr['Robot test fail'];
+//[modif oto] - End mod VSABR
 	// Validate email
 	require PUN_ROOT.'include/email.php';
 
@@ -145,6 +165,30 @@ if (isset($_POST['form_sent']))
 	$email_setting = intval($_POST['email_setting']);
 	if ($email_setting < 0 || $email_setting > 2)
 		$email_setting = $pun_config['o_default_email_setting'];
+
+		
+	// Include the antispam library
+	require PUN_ROOT.'include/nospam.php';
+
+	$req_username = empty($username) ? pun_trim($_POST['req_username']) : $username;
+	if (!empty($_POST['req_username']))
+		$spam = SPAM_HONEYPOT;
+	else if (stopforumspam_check(get_remote_address(), $email1, $req_username))
+		$spam = SPAM_BLACKLIST;
+	else
+		$spam = SPAM_NOT;
+
+	// Log the register attempt
+  	$db->query('INSERT INTO '.$db->prefix.'test_registrations (username, email, email_setting, timezone, ip, referer, user_agent, date, spam, errors) VALUES(\''.$db->escape($req_username).'\', \''.$db->escape($email1).'\', '.$email_setting.', '.$timezone.', \''.get_remote_address().'\', \''.$db->escape($_SERVER['HTTP_REFERER']).'\', \''.$db->escape($_SERVER['HTTP_USER_AGENT']).'\', '.time().', '.$spam.', '.count($errors).')') or error('Unable to log user registration', __FILE__, __LINE__, $db->error());
+
+	if ($spam != SPAM_NOT)
+	{
+		// Since we found a spammer, lets report the bastard!
+		stopforumspam_report(get_remote_address(), $email1, $req_username);
+
+		message($lang_register['Spam catch'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.');
+	}	
+		
 
 	// Did everything go according to plan?
 	if (empty($errors))
@@ -257,7 +301,9 @@ if (isset($_POST['form_sent']))
 
 
 $page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_register['Register']);
-$required_fields = array('req_user' => $lang_common['Username'], 'req_password1' => $lang_common['Password'], 'req_password2' => $lang_prof_reg['Confirm pass'], 'req_email1' => $lang_common['Email'], 'req_email2' => $lang_common['Email'].' 2');
+$required_fields = array('req_honeypot' => $lang_common['Username'], 'req_password1' => $lang_common['Password'], 'req_password2' => $lang_prof_reg['Confirm pass'], 'req_email1' => $lang_common['Email'], 'req_email2' => $lang_common['Email'].' 2');
+$focus_element = array('register', 'req_honeypot');//[modif oto] - mod VSABR Very Simple AntiBot Registration - Line added
+$required_fields['captcha'] = $lang_mod_vsabr['Robot title'];
 $focus_element = array('register', 'req_user');
 define('PUN_ACTIVE_PAGE', 'register');
 require PUN_ROOT.'header.php';
@@ -305,8 +351,8 @@ if (!empty($errors))
 					<legend><?php echo $lang_register['Username legend'] ?></legend>
 					<div class="infldset">
 						<input type="hidden" name="form_sent" value="1" />
-						<label class="required"><strong><?php echo $lang_common['Username'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br /><input type="text" name="req_user" value="<?php if (isset($_POST['req_user'])) echo pun_htmlspecialchars($_POST['req_user']); ?>" size="25" maxlength="25" /><br /></label>
-					</div>
+						<label class="required usernamefield"><strong><?php echo $lang_register['If human'] ?></strong><br /><input type="text" name="req_username" value="" size="25" maxlength="25" /><br /></label>
+						<label class="required"><strong><?php echo $lang_common['Username'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br /><input type="text" name="req_honeypot" value="<?php if (isset($_POST['req_honeypot'])) echo pun_htmlspecialchars($_POST['req_honeypot']); ?>" size="25" maxlength="25" /><br /></label>					</div>
 				</fieldset>
 			</div>
 <?php if ($pun_config['o_regs_verify'] == '0'): ?>			<div class="inform">
@@ -426,10 +472,28 @@ if (!empty($errors))
 						</div>
 					</div>
 				</fieldset>
+				
 			</div>
-			<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
+			<!-- [modif oto] - mod VSABR Very Simple AntiBot Registration -->
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><input type="hidden" name="username" value="" /><br />
+			</label>
+		</div>
+	</fieldset>
+</div>
+<!-- [modif oto] - End mod VSABR -->
+<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
 		</form>
-	</div>
+	
 </div>
 <?php
 

@@ -81,6 +81,35 @@ $lang_profile = array(
 'Realname'						=>	'Real name',
 'Location'						=>	'Location',
 'Website'						=>	'Website',
+
+//mod anniversaire
+'Define PI'			=> 'Define your personal information',
+'Date of Birth'		=> 'Date of Birth',
+'Display_birth'		=> 'Show your birthday',
+'Display_age'		=> 'Show your age',
+'January'			=> 'January',
+'February'			=> 'February',	
+'March'				=> 'March',
+'April'				=> 'April',
+'May'				=> 'May',
+'June'				=> 'June',
+'July'				=> 'July',
+'August'			=> 'August',
+'September'			=> 'September',
+'October'			=> 'October',
+'November'			=> 'November',
+'December'			=> 'December',
+//fin mod anniversaire
+
+// Gender mod
+'Display_gender'	=> 'Show your gender',
+'Male'				=> 'Male',
+'Female'			=> 'Female',
+'Other' 			=> 'Other',
+
+
+// Gender mod
+
 'Invalid website URL'			=>	'The website URL you entered is invalid.',
 'Website not allowed'			=>	'You are not allowed to add a website to your profile yet.',
 'Jabber'						=>	'Jabber',
@@ -126,6 +155,9 @@ $lang_profile = array(
 'Update forums'					=>	'Update forums',
 'Delete ban legend'				=>	'Delete (administrators only) or ban user',
 'Delete user'					=>	'Delete user',
+'Delete spammer'				=>	'Delete user &amp; report spam',
+'Delete spammer note'			=>	'After deletion this user will be reported as a spammer. This is intended for reporting spam bots, <strong>not</strong> annoying users!',
+'Spammer delete redirect'		=>	'User deleted and reported. Redirecting &hellip;',
 'Ban user'						=>	'Ban user',
 'Confirm delete legend'			=>	'Important: read before deleting user',
 'Confirm delete user'			=>	'Confirm delete user',

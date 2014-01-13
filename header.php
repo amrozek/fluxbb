@@ -144,8 +144,33 @@ function process_form(the_form)
 
 }
 
+// PM
+require PUN_ROOT.'plugins/apms/header_add3.php';
+
 // JavaScript tricks for IE6 and older
+//Poll mod
+if (defined('AP_POLL_MAX_CHOICES')) 
+{
+	?>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script type="text/javascript">
+	jQuery(document).ready(function() {
+		jQuery('#ap_poll_enabled').change(function() {
+			if (jQuery('#ap_poll_enabled').attr('checked')) {
+				jQuery('#ap_poll_input').show();
+			} else {
+				jQuery('#ap_poll_input').hide();
+			}
+		});
+	});
+	</script>
+	<?php
+}
+
 echo '<!--[if lte IE 6]><script type="text/javascript" src="style/imports/minmax.js"></script><![endif]-->'."\n";
+
+// added by colorize groups mod
+$page_head['colorize_groups'] = '<style type="text/css">'.$GLOBALS['pun_colorize_groups']['style'].'</style>'; // need $GLOBALS for message function
 
 if (isset($page_head))
 	echo implode("\n", $page_head)."\n";
@@ -171,7 +196,7 @@ $tpl_main = str_replace('<pun_page>', htmlspecialchars(basename($_SERVER['PHP_SE
 
 
 // START SUBST - <pun_title>
-$tpl_main = str_replace('<pun_title>', '<h1><a href="index.php">'.pun_htmlspecialchars($pun_config['o_board_title']).'</a></h1>', $tpl_main);
+$tpl_main = str_replace('<pun_title>', "<a href='/'><div id='logo'></div> </a>", $tpl_main);
 // END SUBST - <pun_title>
 
 
@@ -204,6 +229,9 @@ else
 {
 	$links[] = '<li id="navprofile"'.((PUN_ACTIVE_PAGE == 'profile') ? ' class="isactive"' : '').'><a href="profile.php?id='.$pun_user['id'].'">'.$lang_common['Profile'].'</a></li>';
 
+	// PM
+	require PUN_ROOT.'plugins/apms/header_add2.php';
+	
 	if ($pun_user['is_admmod'])
 		$links[] = '<li id="navadmin"'.((PUN_ACTIVE_PAGE == 'admin') ? ' class="isactive"' : '').'><a href="admin_index.php">'.$lang_common['Admin'].'</a></li>';
 
@@ -234,7 +262,9 @@ if ($pun_user['is_guest'])
 	$page_statusinfo = '<p class="conl">'.$lang_common['Not logged in'].'</p>';
 else
 {
-	$page_statusinfo[] = '<li><span>'.$lang_common['Logged in as'].' <strong>'.pun_htmlspecialchars($pun_user['username']).'</strong></span></li>';
+	// added by colorize groups mod
+	$page_statusinfo[] = '<li><span>'.$lang_common['Logged in as'].' <strong>'.colorize_group($pun_user['username'], $pun_user['g_id'], $pun_user['id']).'</strong></span></li>';
+	
 	$page_statusinfo[] = '<li><span>'.sprintf($lang_common['Last visit'], format_time($pun_user['last_visit'])).'</span></li>';
 
 	if ($pun_user['is_admmod'])
@@ -250,6 +280,9 @@ else
 		if ($pun_config['o_maintenance'] == '1')
 			$page_statusinfo[] = '<li class="maintenancelink"><span><strong><a href="admin_options.php#maintenance">'.$lang_common['Maintenance mode enabled'].'</a></strong></span></li>';
 	}
+	
+	// PM 
+	require PUN_ROOT.'plugins/apms/header_add1.php';
 
 	if ($pun_user['g_read_board'] == '1' && $pun_user['g_search'] == '1')
 	{

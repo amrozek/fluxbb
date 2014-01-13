@@ -162,7 +162,13 @@ else
 // Check if we are to display a maintenance message
 if ($pun_config['o_maintenance'] && $pun_user['g_id'] > PUN_ADMIN && !defined('PUN_TURN_OFF_MAINT'))
 	maintenance_message();
+	
+	// PM
+	require PUN_ROOT.'plugins/apms/common_add1.php';
 
+// added by colorize groups mod
+require PUN_ROOT.'include/colorize_groups.php';
+	
 // Load cached bans
 if (file_exists(FORUM_CACHE_DIR.'cache_bans.php'))
 	include FORUM_CACHE_DIR.'cache_bans.php';

@@ -50,6 +50,7 @@ $result = $db->query('SELECT moderators FROM '.$db->prefix.'forums WHERE id='.$f
 $moderators = $db->result($result);
 $mods_array = ($moderators != '') ? unserialize($moderators) : array();
 
+//  modified by global moderator mod
 if ($pun_user['g_id'] != PUN_ADMIN && ($pun_user['g_moderator'] == '0' || !array_key_exists($pun_user['username'], $mods_array)))
 	message($lang_common['No permission'], false, '403 Forbidden');
 
@@ -875,8 +876,8 @@ if ($db->num_rows($result))
 	for ($i = 0;$cur_topic_id = $db->result($result, $i);$i++)
 		$topic_ids[] = $cur_topic_id;
 
-	// Select topics
-	$result = $db->query('SELECT id, poster, subject, posted, last_post, last_post_id, last_poster, num_views, num_replies, closed, sticky, moved_to FROM '.$db->prefix.'topics WHERE id IN('.implode(',', $topic_ids).') ORDER BY sticky DESC, '.$sort_by.', id DESC') or error('Unable to fetch topic list for forum', __FILE__, __LINE__, $db->error());
+	// Select topics // modified by colorize groups
+	$result = $db->query('SELECT u.id AS uid, u.group_id, up.id AS up_id, up.group_id AS up_group_id, t.id, t.poster, t.subject, t.posted, t.last_post, t.last_post_id, t.last_poster, t.num_views, t.num_replies, t.closed, t.sticky, t.moved_to FROM '.$db->prefix.'topics AS t LEFT JOIN '.$db->prefix.'users AS u ON (t.last_poster=u.username) LEFT JOIN '.$db->prefix.'users AS up ON (t.poster=up.username) WHERE t.id IN ('.implode(',', $topic_ids).')'.' ORDER BY t.sticky DESC, t.'.$sort_by.', t.id DESC') or error('Unable to fetch topic list for forum', __FILE__, __LINE__, $db->error());
 
 	$button_status = '';
 	$topic_count = 0;
@@ -933,6 +934,25 @@ if ($db->num_rows($result))
 		else
 			$subject_new_posts = null;
 
+		// colorize groups
+		if (isset($cur_topic['up_group_id'])) // user
+			$col_group = colorize_group($cur_topic['poster'], $cur_topic['up_group_id'], $cur_topic['up_id']);
+		else // guest
+			$col_group = colorize_group($cur_topic['poster'], PUN_GUEST);
+
+		$subject = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $subject);
+
+		if ($cur_topic['last_post'] != '')
+		{
+			if (isset($cur_topic['group_id'])) // user
+				$col_group = colorize_group($cur_topic['last_poster'], $cur_topic['group_id'], $cur_topic['uid']);
+			else // guest
+				$col_group = colorize_group($cur_topic['last_poster'], PUN_GUEST);
+
+			$last_post = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['last_poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $last_post);
+		}
+		// colorize groups		
+			
 		// Insert the status text before the subject
 		$subject = implode(' ', $status_text).' '.$subject;
 

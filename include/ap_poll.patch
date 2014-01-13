@@ -1,0 +1,869 @@
+diff -rupN fluxbb.orig/edit.php fluxbb/edit.php
+--- fluxbb.orig/edit.php	2010-08-09 12:07:42.000000000 +0200
++++ fluxbb/edit.php	2010-08-10 10:06:10.000000000 +0200
+@@ -8,6 +8,7 @@
+ 
+ define('PUN_ROOT', './');
+ require PUN_ROOT.'include/common.php';
++require PUN_ROOT.'include/ap_poll.php';
+ 
+ 
+ if ($pun_user['g_read_board'] == '0')
+@@ -67,6 +68,10 @@ if (isset($_POST['form_sent']))
+ 			$errors[] = $lang_post['Too long subject'];
+ 		else if ($pun_config['p_subject_all_caps'] == '0' && is_all_uppercase($subject) && !$pun_user['is_admmod'])
+ 			$errors[] = $lang_post['All caps subject'];
++
++		// AP Poll
++		ap_poll_form_validate($errors);
++		// /AP Poll
+ 	}
+ 
+ 	// Clean up message from POST
+@@ -102,6 +107,10 @@ if (isset($_POST['form_sent']))
+ 			// Update the topic and any redirect topics
+ 			$db->query('UPDATE '.$db->prefix.'topics SET subject=\''.$db->escape($subject).'\' WHERE id='.$cur_post['tid'].' OR moved_to='.$cur_post['tid']) or error('Unable to update topic', __FILE__, __LINE__, $db->error());
+ 
++			// AP Poll
++			ap_poll_save($cur_post['tid']);
++			// /AP Poll
++
+ 			// We changed the subject, so we need to take that into account when we update the search words
+ 			update_search_index('edit', $id, $message, $subject);
+ 		}
+@@ -248,6 +257,11 @@ if (!empty($checkboxes))
+ 
+ ?>
+ 			</div>
++			
++			<!-- AP Poll -->
++			<?php if ($can_edit_subject) ap_poll_form_edit($cur_post['tid']); ?>
++			<!-- /AP Poll -->
++			
+ 			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+ 		</form>
+ 	</div>
+diff -rupN fluxbb.orig/header.php fluxbb/header.php
+--- fluxbb.orig/header.php	2010-08-09 12:07:42.000000000 +0200
++++ fluxbb/header.php	2010-09-15 08:58:53.000000000 +0200
+@@ -138,6 +138,23 @@ function process_form(the_form)
+ 
+ }
+ 
++if (defined('AP_POLL_MAX_CHOICES')) 
++{
++	?>
++	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
++	<script type="text/javascript">
++	jQuery(document).ready(function() {
++		jQuery('#ap_poll_enabled').change(function() {
++			if (jQuery('#ap_poll_enabled').attr('checked')) {
++				jQuery('#ap_poll_input').show();
++			} else {
++				jQuery('#ap_poll_input').hide();
++			}
++		});
++	});
++	</script>
++	<?php
++}
+ // JavaScript tricks for IE6 and older
+ echo '<!--[if lte IE 6]><script type="text/javascript" src="style/imports/minmax.js"></script><![endif]-->'."\n";
+ 
+diff -rupN fluxbb.orig/include/ap_poll.php fluxbb/include/ap_poll.php
+--- fluxbb.orig/include/ap_poll.php	1970-01-01 01:00:00.000000000 +0100
++++ fluxbb/include/ap_poll.php	2010-09-14 10:19:28.000000000 +0200
+@@ -0,0 +1,415 @@
++<?php
++/**
++ * Poll Mod for FluxBB, written by As-Planned.com
++ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
++ */
++ 
++if (!defined('PUN')) exit;
++
++// Load the language file
++global $pun_user;
++if (file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/ap_poll.php'))
++	require PUN_ROOT.'lang/'.$pun_user['language'].'/ap_poll.php';
++else
++	require PUN_ROOT.'lang/English/ap_poll.php';
++
++define('AP_POLL_MAX_CHOICES', 15);
++define('AP_POLL_ENABLE_PROMOTED', false);
++
++function ap_poll_post($var, $default = null) 
++{
++	return isset($_POST[$var]) ? $_POST[$var] : $default;
++}
++
++/*
++Returns true when the current user is an administrator
++*/
++function ap_poll_is_admin() 
++{
++	global $pun_user;
++	return ($pun_user['g_id'] == PUN_ADMIN);
++}
++
++/*
++Retrieves poll information into array
++*/
++function ap_poll_info($tid, $uid = NULL) 
++{
++	global $db;
++	
++	$result = $db->query("SELECT question, enabled, promoted FROM " . $db->prefix . "ap_polls WHERE tid = " . $tid) or error('Unable to fetch poll info', __FILE__, __LINE__, $db->error());
++	if (!$db->num_rows($result)) 
++	{
++		return null;
++	}
++	
++	$poll = $db->fetch_assoc($result);
++	$question = $poll['question'];
++	$enabled = (int) $poll['enabled'];
++	$promoted = (int) $poll['promoted'];
++	
++	$result = $db->query("SELECT number, choice, votes FROM " . $db->prefix . "ap_polls_choices WHERE tid = " . $tid . " ORDER BY number") or error('Unable to fetch poll choices', __FILE__, __LINE__, $db->error());
++	$choices = array();
++	$votes = 0;
++	while ($choice = $db->fetch_assoc($result)) 
++	{
++		$choices[(int) $choice['number']] = array('choice' => $choice['choice'], 'votes' => (int) $choice['votes']);
++		$votes += (int) $choice['votes'];
++	}
++
++	return array(
++		'question' => $question, 
++		'enabled' => $enabled, 
++		'promoted' => $promoted,
++		'choices' => $choices, 
++		'votes' => $votes,
++		'canVote' => is_null($uid) ? NULL : ap_poll_can_vote($tid, $uid)
++		);
++}
++
++/* 
++Displays the form for posting new topics
++*/
++function ap_poll_form_post($tid) 
++{
++	if ($tid == 0) 
++	{
++		ap_poll_form($tid);
++	}
++}
++
++/*
++Displays the form shown when the first post in the topic is editted
++*/
++function ap_poll_form_edit($tid) 
++{
++	ap_poll_form($tid);
++}
++
++/*
++Displays the (partial) form that can be used to get the poll information
++from the user
++*/
++function ap_poll_form($tid) 
++{
++	global $cur_index;
++	global $lang_ap_polls;
++	
++	$lang = $lang_ap_polls;
++
++	$default_enabled = 0;
++	$default_promoted = 0;
++	$default_question = '';
++	$default_choices = array();
++
++	if ($tid > 0) 
++	{
++		$info = ap_poll_info($tid);
++		
++		if (!is_null($info)) 
++		{
++			$default_enabled = $info['enabled'];
++			$default_promoted = $info['promoted'];
++			$default_question = $info['question'];
++			$default_choices = array();
++			foreach ($info['choices'] as $number => $choice)
++				$default_choices[$number] = $choice['choice'];
++		}
++	}
++	
++	$enabled = (ap_poll_post('ap_poll_enabled', $default_enabled) == 1);
++	$promoted = (ap_poll_post('ap_poll_promoted', $default_promoted) == 1);
++	$question = pun_htmlspecialchars(ap_poll_post('ap_poll_question', $default_question));
++	$choices = ap_poll_post('ap_poll_choices', $default_choices);
++
++	if (!is_array($choices)) 
++	{
++		error('Incorrect data format for ap_poll_choices', __FILE__, __LINE__);
++		return;
++	} 
++	else 
++	{
++		$choices = array_map('pun_htmlspecialchars', $choices);
++	}
++	?>
++		<div class="inform">
++			<fieldset>
++				<legend><?php echo $lang['Form legend'] ?></legend>
++				<div class="infldset txtarea">
++					<label>
++						<input type="checkbox" id="ap_poll_enabled" name="ap_poll_enabled" value="1" <?php if ($enabled) echo 'checked="checked"'?> tabindex="<?php echo $cur_index++ ?>" /> <?php echo $lang['Form enable'] ?>						
++					</label>
++					
++					<?php if (ap_poll_is_admin() && AP_POLL_ENABLE_PROMOTED): ?>
++						<label>
++							<input type="checkbox" name="ap_poll_promoted" value="1" <?php if ($promoted) echo 'checked="checked"'?> tabindex="<?php echo $cur_index++ ?>" /> <?php echo $lang['Form promoted'] ?>
++						</label>
++					<?php endif ?>			
++
++					<div id="ap_poll_input" class="<?php if (!$enabled) echo 'ap_poll_hidden'; ?>">
++						<label>
++							<?php echo $lang['Form question'] ?><br />
++							<input class="longinput" type="text" name="ap_poll_question" value="<?php echo $question ?>" tabindex="<?php echo $cur_index++ ?>" size="80" maxlength="100" />
++						</label>
++						<?php
++						for ($i = 0; $i < AP_POLL_MAX_CHOICES; $i++) 
++						{
++							$choice = isset($choices[$i]) ? $choices[$i] : '';
++							?>
++							<label>
++								<?php printf($lang['Form choice'], $i + 1) ?><br />
++								<input class="longinput" type="text" name="ap_poll_choices[<?php echo $i?>]" value="<?php echo $choice ?>" tabindex="<?php echo $cur_index++ ?>" size="80" maxlength="100" />
++							</label>
++							<?php
++						}
++						?>						
++					</div>
++				</div>
++			</fieldset>
++		</div>
++	<?php
++}
++
++/*
++Validates the poll form, adding any errors it encounters to the array 
++provided as the argument
++*/
++function ap_poll_form_validate(&$errors) 
++{
++	global $lang_ap_polls;
++	$lang = $lang_ap_polls;
++	
++	$enabled = (ap_poll_post('ap_poll_enabled', 0) == 1);
++	// promoted not required for validation
++	$question = ap_poll_post('ap_poll_question');
++	$choices = ap_poll_post('ap_poll_choices', array());
++
++	if ($enabled) 
++	{
++		if (empty($question))
++			$errors[] = $lang['No question'];
++		else if (pun_strlen($question) > 100)
++			$errors[] = $lang['Question too long'];
++	
++		if (!is_array($choices)) 
++		{
++			$errors[] = $lang['Incorrect data for choices'];
++		}
++		else 
++		{
++			$choice_count = 0;
++			for ($i = 0; $i < AP_POLL_MAX_CHOICES; $i++) 
++			{
++				if (isset($choices[$i]) && !empty($choices[$i])) 
++				{
++					if (pun_strlen($choices[$i]) > 100) 
++					{
++						$errors[] = sprintf($lang['Choice too long'], $i + 1);
++					}
++					$choice_count++;
++				}
++			}
++			
++			if ($choice_count < 2)
++				$errors[] = $lang['Not enough choices'];
++		}
++	}
++}
++
++/*
++Save the poll information to the database
++*/
++function ap_poll_save($tid) 
++{
++	global $db;
++	$cur_choices = array();
++	
++	// Check if poll fields were in form by checking if question field
++	// was part of the post data. If not, return without action
++	$question = ap_poll_post('ap_poll_question');
++	if (is_null($question)) 
++	{
++		return;
++	}
++
++	$enabled = (ap_poll_post('ap_poll_enabled', 0) == 1);
++	$promoted = (ap_poll_post('ap_poll_promoted', 0) == 1);
++	$question = ap_poll_post('ap_poll_question');
++	$choices = ap_poll_post('ap_poll_choices', array());	
++
++	// If the poll isn't enabled, disable it and don't save info
++	if (!$enabled) 
++	{
++		$db->query("UPDATE " . $db->prefix . "ap_polls SET enabled = 0 WHERE tid = " . $tid) or error('Unable to disable poll', __FILE__, __LINE__, $db->error());
++		return;
++	}
++
++	// Check if a poll is already attached to this topic. If it is, update it.
++	// Also fetch the current choices
++	$result = $db->query("SELECT 1 FROM " . $db->prefix . "ap_polls WHERE tid = " . $tid) or error('Unable to fetch poll info', __FILE__, __LINE__, $db->error());
++	if ($db->num_rows($result))	
++	{
++		$db->query("UPDATE " . $db->prefix . "ap_polls SET enabled = 1, question = '" . $db->escape($question) . "' WHERE tid = " . $tid) or error('Unable to update poll', __FILE__, __LINE__, $db->error());
++		
++		$result = $db->query("SELECT number FROM " . $db->prefix . "ap_polls_choices WHERE tid = " . $tid) or error('Unable to fetch poll info', __FILE__, __LINE__, $db->error());
++		while ($choice = $db->fetch_assoc($result))
++			$cur_choices[(int) $choice['number']] = true;
++		
++	// If the poll is new, add it.
++	} 
++	else 
++	{
++		$db->query("INSERT INTO " . $db->prefix . "ap_polls (tid, question) VALUES (" . $tid . ",'" . $db->escape($question) . "')") or error('Unable to create poll', __FILE__, __LINE__, $db->error());		
++	}	
++
++	if (ap_poll_is_admin()) 
++	{
++		$db->query("UPDATE " . $db->prefix . "ap_polls SET promoted = " . ($promoted ? 1 : 0) . " WHERE tid = " . $tid) or error('Unable to update poll promoted status', __FILE__, __LINE__, $db->error());
++	}
++	
++	// Update the choices. First, update and insert new choices
++	for ($i = 0; $i < AP_POLL_MAX_CHOICES; $i++)
++	{
++		if (isset($choices[$i]) && !empty($choices[$i]))
++		{
++		
++			// If the choice with this number already existed, only update
++			// the choice text.
++			if (isset($cur_choices[$i])) 
++			{
++				$db->query("UPDATE " . $db->prefix . "ap_polls_choices SET choice = '" . $db->escape($choices[$i]) . "' WHERE number = " . $i . " AND tid = " . $tid) or error('Unable to update poll choice', __FILE__, __LINE__, $db->error());
++				unset($cur_choices[$i]);
++				
++			// If the choice is new, insert it
++			}
++			else
++			{
++				$db->query("INSERT INTO " . $db->prefix . "ap_polls_choices (tid, number, choice) VALUES (" . $tid . "," . $i . ",'" . $db->escape($choices[$i]) . "')") or error('Unable to create poll choice', __FILE__, __LINE__, $db->error());			
++			}
++		}
++	}
++	
++	// Now, process choices that have been removed
++	// Note that this may destroy votes
++	foreach ($cur_choices as $number => $tmp) 
++	{
++		$db->query("DELETE FROM " . $db->prefix . "ap_polls_choices WHERE number = " . $number . " AND tid = " . $tid) or error('Unable to remove poll choice', __FILE__, __LINE__, $db->error());
++	}
++}
++
++/*
++Remove a poll, used when a topic is deleted
++*/
++function ap_poll_delete($tid) 
++{
++	global $db;
++	
++	$db->query("DELETE FROM " . $db->prefix . "ap_polls WHERE tid = " . $tid) or error('Unable to remove poll', __FILE__, __LINE__, $db->error());	
++	$db->query("DELETE FROM " . $db->prefix . "ap_polls_choices WHERE tid = " . $tid) or error('Unable to remove poll choices', __FILE__, __LINE__, $db->error());	
++	$db->query("DELETE FROM " . $db->prefix . "ap_polls_voted WHERE tid = " . $tid) or error('Unable to remove poll voted list', __FILE__, __LINE__, $db->error());	
++}
++
++/*
++Returns true when the given user is allowed to cast a vote for the poll
++*/
++function ap_poll_can_vote($tid, $uid) 
++{
++	global $db;
++	global $pun_user;
++	$result = $db->query("SELECT 1 FROM " . $db->prefix . "ap_polls_voted WHERE tid = " . $tid . " AND uid = " . $uid) or error('Unable to fetch poll voted info', __FILE__, __LINE__, $db->error());
++	return ($db->num_rows($result) == 0) && !$pun_user['is_guest'];
++}
++
++/*
++Display the poll to users
++*/
++function ap_poll_display($tid, $info) 
++{
++	global $db;
++	global $lang_ap_polls;
++	
++	$lang = $lang_ap_polls;
++
++	if (is_null($info)) return;
++	if (!$info['enabled']) return;
++	
++	$can_vote = $info['canVote'];
++
++	$max = 0;
++	foreach ($info['choices'] as $choice) 
++	{
++		if ($choice['votes'] > $max) $max = $choice['votes'];
++	}
++	$maxPercent = $info['votes'] == 0 ? 1 : 100 * (float) $max / $info['votes'];
++
++	?>
++	<fieldset class="ap_poll">
++		<p><?php echo htmlspecialchars($info['question']) ?></p>
++		<form method="post" action="viewtopic.php?id=<?php echo $tid ?>&amp;action=ap_vote">
++		<table>
++			<?php 
++			foreach ($info['choices'] as $number => $choice) 
++			{
++				if (empty($choice)) continue;
++				
++				if ($info['votes'] == 0) 
++				{
++					$percent = 0;
++				}
++				else
++				{
++					$percent = round(100 * (float) $choice['votes'] / $info['votes']);
++				}
++				?>
++				<tr>
++					<th>
++						<?php 
++						if ($can_vote) 
++						{
++							printf('<label><input type="radio" name="ap_vote" value="%d" /> %s</label>', 
++								$number, htmlspecialchars($choice['choice']));
++						}
++						else
++						{
++							echo htmlspecialchars($choice['choice']);
++						}		
++						?>
++					</th>
++					<td class="percent"><?php echo $percent ?>%</td>
++					<td class="results">
++						<div class="bar" style="width: <?php echo round(150 * (float) $percent / $maxPercent)?>px"><div class="top"></div></div>
++					</td>
++				</tr>
++				<?php
++			}
++			?>
++		</table>
++		<div class="total"><?php printf($lang['Vote total'], $info['votes']) ?></div>
++		<?php if ($can_vote): ?>
++			<input type="submit" value="<?php echo $lang['Vote button'] ?>" />
++		<?php endif ?>
++		</form>
++	</fieldset>
++	<?php
++}
++
++/*
++Cast a vote
++*/
++function ap_poll_vote($tid, $uid) 
++{
++	global $db;
++
++	$vote = ap_poll_post('ap_vote');
++	$can_vote = ap_poll_can_vote($tid, $uid);
++	
++	if (is_null($vote) || !$can_vote) return;
++
++	// Note that when vote has a non-integer value, this will be mapped to the first choice
++	// This is not a problem, since valid votes will always contain an integer value
++	$number = (int) $vote;
++
++	$db->query("UPDATE " . $db->prefix . "ap_polls_choices SET votes = votes + 1 WHERE tid = " . $tid . " AND number = " . $number) or error('Unable to save vote', __FILE__, __LINE__, $db->error());	
++	$db->query("INSERT INTO " . $db->prefix . "ap_polls_voted (tid, uid) VALUES (" . $tid . "," . $uid . ")") or error('Unable to save vote', __FILE__, __LINE__, $db->error());		
++	
++}
+\ No newline at end of file
+diff -rupN fluxbb.orig/include/functions.php fluxbb/include/functions.php
+--- fluxbb.orig/include/functions.php	2010-08-09 12:07:42.000000000 +0200
++++ fluxbb/include/functions.php	2010-08-10 10:06:10.000000000 +0200
+@@ -666,9 +666,13 @@ function delete_topic($topic_id)
+ 		// Delete posts in topic
+ 		$db->query('DELETE FROM '.$db->prefix.'posts WHERE topic_id='.$topic_id) or error('Unable to delete posts', __FILE__, __LINE__, $db->error());
+ 	}
+-
+ 	// Delete any subscriptions for this topic
+ 	$db->query('DELETE FROM '.$db->prefix.'subscriptions WHERE topic_id='.$topic_id) or error('Unable to delete subscriptions', __FILE__, __LINE__, $db->error());
++	
++	// AP Poll
++	require PUN_ROOT.'include/ap_poll.php';
++	ap_poll_delete($topic_id);
++	// /AP Poll
+ }
+ 
+ 
+diff -rupN fluxbb.orig/install_mod.php fluxbb/install_mod.php
+--- fluxbb.orig/install_mod.php	1970-01-01 01:00:00.000000000 +0100
++++ fluxbb/install_mod.php	2010-08-10 10:06:10.000000000 +0200
+@@ -0,0 +1,238 @@
++<?php
++/***********************************************************************/
++
++// Some info about your mod.
++$mod_title      = 'AP Poll';
++$mod_version    = '1.0';
++$release_date   = '2010-08-03';
++$author         = 'kg';
++$author_email   = 'kg@as-planned.com';
++
++// Versions of FluxBB this mod was created for. A warning will be displayed, if versions do not match
++$fluxbb_versions= array('1.4', '1.4.1');
++
++// Set this to false if you haven't implemented the restore function (see below)
++$mod_restore	= true;
++
++
++// This following function will be called when the user presses the "Install" button
++function install()
++{
++	global $db, $db_type, $pun_config;
++
++	/* 
++	ap_polls
++	Used to store poll information
++	*/
++	$schema = array(
++			'FIELDS'			=> array(
++					'tid'				=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'    	=> false
++					),
++					'question'			=> array(
++							'datatype'			=> 'TEXT',
++							'allow_null'		=> false
++					),
++					'enabled'			=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'		=> false,
++							'default'			=> 1
++					),
++					'promoted'			=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'		=> false,
++							'default'			=> 0
++					)
++
++			),
++			'PRIMARY KEY'		=> array('tid')
++	);
++	$a = $db->create_table('ap_polls', $schema) or error('Unable to create table "ap_polls"', __FILE__, __LINE__, $db->error());
++
++	/*
++	ap_polls_choices
++	Used to store the information related to the individual options
++	*/
++	$schema = array(
++			'FIELDS'			=> array(
++					'tid'				=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'    	=> false
++					),
++					'number'			=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'		=> false
++					),
++					'choice'			=> array(
++							'datatype'			=> 'TEXT',
++							'allow_null'		=> false
++					),
++					'votes'				=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'		=> false,
++							'default'			=> 0
++					)
++
++			),
++			'PRIMARY KEY'		=> array('tid', 'number')
++	);
++	
++	$db->create_table('ap_polls_choices', $schema) or error('Unable to create table "ap_polls_choices"', __FILE__, __LINE__, $db->error());
++
++	/*
++	ap_polls_voted
++	Used to store which users have voted for each poll. Used
++	to prevent voting more than once.
++	*/
++	$schema = array(
++			'FIELDS'			=> array(
++					'tid'				=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'    	=> false
++					),
++					'uid'			=> array(
++							'datatype'			=> 'INTEGER',
++							'allow_null'		=> false
++					)
++			),
++			'PRIMARY KEY'		=> array('tid', 'uid')
++	);
++	
++	$db->create_table('ap_polls_voted', $schema) or error('Unable to create table "ap_polls_voted"', __FILE__, __LINE__, $db->error());
++	
++	/* Finalize changes */
++	$db->end_transaction();
++}
++
++// This following function will be called when the user presses the "Restore" button (only if $mod_restore is true (see above))
++function restore()
++{
++	global $db, $db_type, $pun_config;
++
++	$db->drop_table('ap_polls') or error('Unable to drop table "ap_polls"', __FILE__, __LINE__, $db->error());
++	$db->drop_table('ap_polls_choices') or error('Unable to drop table "ap_polls_choices"', __FILE__, __LINE__, $db->error());
++	$db->drop_table('ap_polls_voted') or error('Unable to drop table "ap_polls_voted"', __FILE__, __LINE__, $db->error());
++	$db->end_transaction();
++}
++
++/***********************************************************************/
++
++// DO NOT EDIT ANYTHING BELOW THIS LINE!
++
++
++// Circumvent maintenance mode
++define('PUN_TURN_OFF_MAINT', 1);
++define('PUN_ROOT', './');
++require PUN_ROOT.'include/common.php';
++
++// We want the complete error message if the script fails
++if (!defined('PUN_DEBUG'))
++	define('PUN_DEBUG', 1);
++
++// Make sure we are running a FluxBB version that this mod works with
++$version_warning = !in_array($pun_config['o_cur_version'], $fluxbb_versions);
++
++$style = (isset($pun_user)) ? $pun_user['style'] : $pun_config['o_default_style'];
++
++?>
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
++<head>
++<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
++<title><?php echo pun_htmlspecialchars($mod_title) ?> installation</title>
++<link rel="stylesheet" type="text/css" href="style/<?php echo $style.'.css' ?>" />
++</head>
++<body>
++
++<div id="punwrap">
++
++<div id="puninstall" class="pun" style="margin: 10% 20% auto 20%">
++
++<?php
++
++if (isset($_POST['form_sent']))
++{
++	if (isset($_POST['install']))
++	{
++		// Run the install function (defined above)
++		install();
++
++?>
++<div class="block">
++
++	<h2><span>Installation successful</span></h2>
++
++	<div class="box">
++
++		<div class="inbox">
++			<p>Your database has been successfully prepared for <?php echo pun_htmlspecialchars($mod_title) ?>. See readme.txt for further instructions.</p>
++		</div>
++	</div>
++
++</div>
++<?php
++
++	}
++	else
++	{
++		// Run the restore function (defined above)
++		restore();
++
++?>
++<div class="block">
++
++	<h2><span>Restore successful</span></h2>
++
++	<div class="box">
++
++		<div class="inbox">
++			<p>Your database has been successfully restored.</p>
++		</div>
++	</div>
++
++</div>
++<?php
++
++	}
++}
++else
++{
++
++?>
++<div class="blockform">
++
++	<h2><span>Mod installation</span></h2>
++
++	<div class="box">
++		<form method="post" action="<?php echo $_SERVER['PHP_SELF'] ?>?foo=bar">
++
++			<div><input type="hidden" name="form_sent" value="1" /></div>
++			<div class="inform">
++				<p>This script will update your database to work with the following modification:</p>
++				<p><strong>Mod title:</strong> <?php echo pun_htmlspecialchars($mod_title.' '.$mod_version) ?></p>
++				<p><strong>Author:</strong> <?php echo pun_htmlspecialchars($author) ?> (<a href="mailto:<?php echo pun_htmlspecialchars($author_email) ?>"><?php echo pun_htmlspecialchars($author_email) ?></a>)</p>
++				<p><strong>Disclaimer:</strong> Mods are not officially supported by FluxBB. Mods generally can't be uninstalled without running SQL queries manually against the database. Make backups of all data you deem necessary before installing.</p>
++<?php if ($mod_restore): ?>
++				<p>If you've previously installed this mod and would like to uninstall it, you can click the Restore button below to restore the database.</p>
++<?php endif; ?>
++<?php if ($version_warning): ?>
++				<p style="color: #a00"><strong>Warning:</strong> The mod you are about to install was not made specifically to support your current version of FluxBB (<?php echo $pun_config['o_cur_version']; ?>). This mod supports FluxBB versions: <?php echo pun_htmlspecialchars(implode(', ', $fluxbb_versions)); ?>. If you are uncertain about installing the mod due to this potential version conflict, contact the mod author.</p>
++<?php endif; ?>
++			</div>
++			<p class="buttons"><input type="submit" name="install" value="Install" /><?php if ($mod_restore): ?><input type="submit" name="restore" value="Restore" /><?php endif; ?></p>
++		</form>
++	</div>
++
++</div>
++<?php
++
++}
++
++?>
++
++</div>
++</div>
++
++</body>
++</html>
+\ No newline at end of file
+diff -rupN fluxbb.orig/lang/English/ap_poll.php fluxbb/lang/English/ap_poll.php
+--- fluxbb.orig/lang/English/ap_poll.php	1970-01-01 01:00:00.000000000 +0100
++++ fluxbb/lang/English/ap_poll.php	2010-08-10 10:06:10.000000000 +0200
+@@ -0,0 +1,22 @@
++<?php
++
++// Language definitions used in ap_polls.php
++$lang_ap_polls = array(
++
++// Form
++'Form legend'				=>	'Poll',
++'Form enable'				=>	'Include a poll in this topic',
++'Form question'				=>	'Question',
++'Form choice'				=>	'Choice %d',
++'Form promoted'				=>  'Promoted poll',
++
++// Validation
++'No question'				=>	'No question has been provided',
++'Question too long'			=>	'The question is too long',
++'Choice too long'			=>	'Choice %d is too long',
++'Not enough choices'		=>	'Not enough choices have been provided',
++
++// Voting form
++'Vote total'				=>	'Total votes: %d',
++'Vote button'				=>	'Vote!'
++);
+diff -rupN fluxbb.orig/post.php fluxbb/post.php
+--- fluxbb.orig/post.php	2010-08-09 12:07:42.000000000 +0200
++++ fluxbb/post.php	2010-08-10 10:06:10.000000000 +0200
+@@ -8,6 +8,7 @@
+ 
+ define('PUN_ROOT', './');
+ require PUN_ROOT.'include/common.php';
++require PUN_ROOT.'include/ap_poll.php';
+ 
+ 
+ if ($pun_user['g_read_board'] == '0')
+@@ -143,6 +144,10 @@ if (isset($_POST['form_sent']))
+ 
+ 	$now = time();
+ 
++	// AP Poll
++	ap_poll_form_validate($errors);
++	// /AP Poll
++
+ 	// Did everything go according to plan?
+ 	if (empty($errors) && !isset($_POST['preview']))
+ 	{
+@@ -291,6 +296,10 @@ if (isset($_POST['form_sent']))
+ 			update_search_index('post', $new_pid, $message, $subject);
+ 
+ 			update_forum($fid);
++			
++			// AP Poll
++			ap_poll_save($new_tid);
++			// /AP Poll
+ 		}
+ 
+ 		// If we previously found out that the email was banned
+@@ -554,6 +563,11 @@ if (!empty($checkboxes))
+ 
+ ?>
+ 			</div>
++			
++			<!-- AP Poll -->
++			<?php ap_poll_form_post($tid); ?>
++			<!-- /AP Poll -->
++			
+ 			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+ 		</form>
+ 	</div>
+
+diff -rupN fluxbb.orig/viewtopic.php fluxbb/viewtopic.php
+--- fluxbb.orig/viewtopic.php	2010-08-09 12:07:42.000000000 +0200
++++ fluxbb/viewtopic.php	2010-09-14 09:56:58.000000000 +0200
+@@ -8,6 +8,7 @@
+ 
+ define('PUN_ROOT', './');
+ require PUN_ROOT.'include/common.php';
++require PUN_ROOT.'include/ap_poll.php';
+ 
+ 
+ if ($pun_user['g_read_board'] == '0')
+@@ -84,7 +85,12 @@ else if ($action == 'last')
+ 		exit;
+ 	}
+ }
+-
++// AP Poll
++else if ($action == 'ap_vote') 
++{
++	ap_poll_vote($id, $pun_user['id']);
++}
++// /AP Poll
+ 
+ // Fetch some info about the topic
+ if (!$pun_user['is_guest'])
+@@ -204,6 +210,10 @@ $post_ids = array();
+ for ($i = 0;$cur_post_id = $db->result($result, $i);$i++)
+ 	$post_ids[] = $cur_post_id;
+ 
++// AP Poll
++$ap_current_poll = ap_poll_info($id, $pun_user['id']);
++// /AP Poll
++
+ // Retrieve the posts (and their respective poster/online status)
+ $result = $db->query('SELECT u.email, u.title, u.url, u.location, u.signature, u.email_setting, u.num_posts, u.registered, u.admin_note, p.id, p.poster AS username, p.poster_id, p.poster_ip, p.poster_email, p.message, p.hide_smilies, p.posted, p.edited, p.edited_by, g.g_id, g.g_user_title, o.user_id AS is_online FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'users AS u ON u.id=p.poster_id INNER JOIN '.$db->prefix.'groups AS g ON g.g_id=u.group_id LEFT JOIN '.$db->prefix.'online AS o ON (o.user_id=u.id AND o.user_id!=1 AND o.idle=0) WHERE p.id IN ('.implode(',', $post_ids).') ORDER BY p.id', true) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
+ while ($cur_post = $db->fetch_assoc($result))
+@@ -355,6 +365,7 @@ while ($cur_post = $db->fetch_assoc($res
+ 					<div class="postmsg">
+ 						<?php echo $cur_post['message']."\n" ?>
+ <?php if ($cur_post['edited'] != '') echo "\t\t\t\t\t\t".'<p class="postedit"><em>'.$lang_topic['Last edit'].' '.pun_htmlspecialchars($cur_post['edited_by']).' ('.format_time($cur_post['edited']).')</em></p>'."\n"; ?>
++					<?php if ($cur_post['id'] == $cur_topic['first_post_id']) ap_poll_display($id, $ap_current_poll) ?>
+ 					</div>
+ <?php if ($signature != '') echo "\t\t\t\t\t".'<div class="postsignature postmsg"><hr />'.$signature.'</div>'."\n"; ?>
+ 				</div>

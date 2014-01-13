@@ -8,6 +8,7 @@
 
 define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
+require PUN_ROOT.'include/ap_poll.php';
 
 
 if ($pun_user['g_read_board'] == '0')
@@ -20,8 +21,22 @@ $pid = isset($_GET['pid']) ? intval($_GET['pid']) : 0;
 if ($id < 1 && $pid < 1)
 	message($lang_common['Bad request'], false, '404 Not Found');
 
+// [modif oto] - mod VSABR Very Simple AntiBot Registration - Add language file
+if(file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php'))
+  require PUN_ROOT.'lang/'.$pun_user['language'].'/mod_very_simple_antibot.php';
+else
+  require PUN_ROOT.'lang/English/mod_very_simple_antibot.php';
+$mod_vsabr_index = rand(0,count($mod_vsabr_questions)-1);
+// [modif oto] - End mod VSABR
 // Load the viewtopic.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/topic.php';
+
+// Easy BBCode Mod
+if (file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/easy_bbcode.php'))
+	require PUN_ROOT.'lang/'.$pun_user['language'].'/easy_bbcode.php';
+else
+	require PUN_ROOT.'lang/English/easy_bbcode.php';
+// End Easy BBCode Mod
 
 
 // If a post ID is specified we determine topic ID and page number so we can redirect to the correct message
@@ -59,6 +74,7 @@ else if ($action == 'new')
 		}
 	}
 
+
 	// If there is no new post, we go to the last post
 	header('Location: viewtopic.php?id='.$id.'&action=last');
 	exit;
@@ -76,6 +92,13 @@ else if ($action == 'last')
 		exit;
 	}
 }
+
+// AP Poll
+else if ($action == 'ap_vote') 
+{
+	ap_poll_vote($id, $pun_user['id']);
+}
+// /AP Poll
 
 
 // Fetch some info about the topic
@@ -206,9 +229,13 @@ for ($i = 0;$cur_post_id = $db->result($result, $i);$i++)
 
 if (empty($post_ids))
 	error('The post table and topic table seem to be out of sync!', __FILE__, __LINE__);
+	
+// AP Poll
+$ap_current_poll = ap_poll_info($id, $pun_user['id']);
+// /AP Poll
 
-// Retrieve the posts (and their respective poster/online status)
-$result = $db->query('SELECT u.email, u.title, u.url, u.location, u.signature, u.email_setting, u.num_posts, u.registered, u.admin_note, p.id, p.poster AS username, p.poster_id, p.poster_ip, p.poster_email, p.message, p.hide_smilies, p.posted, p.edited, p.edited_by, g.g_id, g.g_user_title, o.user_id AS is_online FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'users AS u ON u.id=p.poster_id INNER JOIN '.$db->prefix.'groups AS g ON g.g_id=u.group_id LEFT JOIN '.$db->prefix.'online AS o ON (o.user_id=u.id AND o.user_id!=1 AND o.idle=0) WHERE p.id IN ('.implode(',', $post_ids).') ORDER BY p.id', true) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
+// Retrieve the posts (and their respective poster/online status) - [Mod] Image Award added, Anniversaire mod added, Gender mod added
+$result = $db->query('SELECT u.email, u.title, u.url, u.location, u.signature, u.email_setting, u.use_pm, u.num_posts, u.registered, u.admin_note, u.anniversairem, u.anniversairea, u.anniversairej, u.age_enabled, u.anniversaire_enabled, u.gender, u.gender_enabled, u.imgaward, p.id, p.poster AS username, p.poster_id, p.poster_ip, p.poster_email, p.message, p.hide_smilies, p.posted, p.edited, p.edited_by, g.g_id, g.g_user_title, o.user_id AS is_online FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'users AS u ON u.id=p.poster_id INNER JOIN '.$db->prefix.'groups AS g ON g.g_id=u.group_id LEFT JOIN '.$db->prefix.'online AS o ON (o.user_id=u.id AND o.user_id!=1 AND o.idle=0) WHERE p.id IN ('.implode(',', $post_ids).') ORDER BY p.id', true) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error()); // Image Award Mod altered this (added one more column to fetch)
 while ($cur_post = $db->fetch_assoc($result))
 {
 	$post_count++;
@@ -218,10 +245,31 @@ while ($cur_post = $db->fetch_assoc($result))
 	$post_actions = array();
 	$is_online = '';
 	$signature = '';
+	$user_image_award = ''; // [Mod] Image Award added
 
 	// If the poster is a registered user
 	if ($cur_post['poster_id'] > 1)
 	{
+		// [Mod] Image Award
+		if (file_exists(PUN_ROOT.'/lang/'.$pun_user['language'].'/admin_image_award.php'))
+			require PUN_ROOT.'/lang/'.$pun_user['language'].'/admin_image_award.php';
+        else
+			require PUN_ROOT.'/lang/English/admin_image_award.php';
+
+		if(strlen($cur_post['imgaward']) > 0){	// if we have something there, figure out what to output...
+			//figure out the size of the award (Name of award should be in teh form:  Test_Award_100x20.png ... where png is format, 100x20 is dimensions and Test_Award is name of award (seen in admin interface)
+			$awardmod_filename=$cur_post['imgaward'];
+			$awardmod_temp=substr($awardmod_filename,strrpos($awardmod_filename,'_')+1); //we still have the file extentsion
+			$awardmod_temp=substr($awardmod_temp,0,strpos($awardmod_temp,'.'));
+			$awardmod_dimensions = explode('x',$awardmod_temp);	// there ... now the array will hold 100 and 20 in [0] and [1] respecively ... :)
+			$awardmod_name=str_replace('_',' ',substr($awardmod_filename,0,strrpos($awardmod_filename,'_')));
+			if($pun_config['o_avatars'] == '1' && $pun_user['show_avatars'] != '0')
+				$user_image_award = "\t\t\t\t\t\t".'<dd class="award"><img src="img/awards/'.$awardmod_filename.'" width="'.$awardmod_dimensions[0].'" height="'.$awardmod_dimensions[1].'" alt="'.$lang_admin_image_award['award'].' '.pun_htmlspecialchars($awardmod_name).'" /></dd>'."\n";
+			else
+				$user_image_award = "\t\t\t\t\t\t".'<dd class="award">'.$lang_admin_image_award['award'].' "'.pun_htmlspecialchars($awardmod_name).'"</dd>';
+		}
+		// [Mod] End Image Award
+
 		if ($pun_user['g_view_users'] == '1')
 			$username = '<a href="profile.php?id='.$cur_post['poster_id'].'">'.pun_htmlspecialchars($cur_post['username']).'</a>';
 		else
@@ -244,44 +292,119 @@ while ($cur_post = $db->fetch_assoc($result))
 		}
 
 		// We only show location, register date, post count and the contact links if "Show user info" is enabled
-		if ($pun_config['o_show_user_info'] == '1')
-		{
-			if ($cur_post['location'] != '')
-			{
+		if ($pun_config['o_show_user_info'] == '1') {
+
+			//mod anniversaire 
+			if($cur_post['age_enabled']){
+
+				if (date("m")< $cur_post['anniversairem']){
+					$age = date("Y") - $cur_post['anniversairea'] -1 .' '.$lang_topic['years old'].'';
+				}
+				elseif (date("m") == $cur_post['anniversairem']) {
+
+					if (date("d")< $cur_post['$anniversairej']){
+						$age = date("Y") - $cur_post['anniversairea'] - 1 .' '.$lang_topic['years old'].'';
+					}
+					else {
+						$age = date("Y") - $cur_post['anniversairea'].' '.$lang_topic['years old'].'';
+					}
+				}
+				else {
+					$age = date("Y") - $cur_post['anniversairea'].' '.$lang_topic['years old'].'';
+				}
+
+				if ($cur_post['anniversairem'] == 1 )
+				$monthanniv = $lang_topic['January'];
+				if ($cur_post['anniversairem'] == 2 )
+				$monthanniv = $lang_topic['February'];
+				if ($cur_post['anniversairem'] == 3 )
+				$monthanniv = $lang_topic['March'];
+				if ($cur_post['anniversairem'] == 4 )
+				$monthanniv = $lang_topic['April'];
+				if ($cur_post['anniversairem'] == 5 )
+				$monthanniv = $lang_topic['May'];
+				if ($cur_post['anniversairem'] == 6 )
+				$monthanniv = $lang_topic['June'];
+				if ($cur_post['anniversairem'] == 7 )
+				$monthanniv = $lang_topic['July'];
+				if ($cur_post['anniversairem'] == 8 )
+				$monthanniv = $lang_topic['August'];
+				if ($cur_post['anniversairem'] == 9 )
+				$monthanniv = $lang_topic['September'];
+				if ($cur_post['anniversairem'] == 10 )
+				$monthanniv = $lang_topic['October'];
+				if ($cur_post['anniversairem'] == 11 )
+				$monthanniv = $lang_topic['November'];
+				if ($cur_post['anniversairem'] == 12 )
+				$monthanniv = $lang_topic['December'];
+			}	//fin mod anniversaire
+	
+			// Gender mod
+			if($cur_post['gender_enabled']) {
+				if($cur_post['gender'] == 0){
+					$gender = $lang_topic['Male'];
+				}
+				elseif($cur_post['gender'] == 1){
+					$gender = $lang_topic['Female'];
+				}
+				else{
+					$gender = $lang_topic['Other'];
+				}
+			} //Gender mod
+	
+			if ($cur_post['location'] != ''){
 				if ($pun_config['o_censoring'] == '1')
 					$cur_post['location'] = censor_words($cur_post['location']);
-
 				$user_info[] = '<dd><span>'.$lang_topic['From'].' '.pun_htmlspecialchars($cur_post['location']).'</span></dd>';
-			}
-
+			}	
+			
 			$user_info[] = '<dd><span>'.$lang_topic['Registered'].' '.format_time($cur_post['registered'], true).'</span></dd>';
 
 			if ($pun_config['o_show_post_count'] == '1' || $pun_user['is_admmod'])
 				$user_info[] = '<dd><span>'.$lang_topic['Posts'].' '.forum_number_format($cur_post['num_posts']).'</span></dd>';
+				
 
+			// mod anniversaire
+			if($cur_post['anniversaire_enabled']) {
+				$user_info[] = '<dd><span>'.$lang_topic['Birthday'].': '.$cur_post['anniversairej'].' '.$monthanniv.'</span></dd>';
+			}
+			if($cur_post['age_enabled']){
+				$user_info[] = '<dd><span>'.$lang_topic['Age'].': '.$age.'</span></dd>';
+			} //fin mod anniversaire	
+			
+			// gender mod
+			if($cur_post['gender_enabled']) {
+				$user_info[] = '<dd><span>'.$lang_topic['Gender'].': '.$gender.'</span></dd>';
+			}
+			// gender mod
+				
 			// Now let's deal with the contact links (Email and URL)
 			if ((($cur_post['email_setting'] == '0' && !$pun_user['is_guest']) || $pun_user['is_admmod']) && $pun_user['g_send_email'] == '1')
 				$user_contacts[] = '<span class="email"><a href="mailto:'.$cur_post['email'].'">'.$lang_common['Email'].'</a></span>';
 			else if ($cur_post['email_setting'] == '1' && !$pun_user['is_guest'] && $pun_user['g_send_email'] == '1')
 				$user_contacts[] = '<span class="email"><a href="misc.php?email='.$cur_post['poster_id'].'">'.$lang_common['Email'].'</a></span>';
-
-			if ($cur_post['url'] != '')
-			{
+					
+				// PM
+				require PUN_ROOT.'plugins/apms/viewtopic_add1.php';
+					
+			if ($cur_post['url'] != '') {
 				if ($pun_config['o_censoring'] == '1')
 					$cur_post['url'] = censor_words($cur_post['url']);
-
 				$user_contacts[] = '<span class="website"><a href="'.pun_htmlspecialchars($cur_post['url']).'" rel="nofollow">'.$lang_topic['Website'].'</a></span>';
 			}
-		}
+		} // end show user info stuff
 
-		if ($pun_user['is_admmod'])
-		{
+		if ($pun_user['is_admmod']){
+			
+			// There was mod anniversaire stuff here, but I'm not really sure why.
+			
 			$user_info[] = '<dd><span><a href="moderate.php?get_host='.$cur_post['id'].'" title="'.pun_htmlspecialchars($cur_post['poster_ip']).'">'.$lang_topic['IP address logged'].'</a></span></dd>';
 
 			if ($cur_post['admin_note'] != '')
 				$user_info[] = '<dd><span>'.$lang_topic['Note'].' <strong>'.pun_htmlspecialchars($cur_post['admin_note']).'</strong></span></dd>';
 		}
 	}
+	
 	// If the poster is a guest (or a user that has been deleted)
 	else
 	{
@@ -323,6 +446,22 @@ while ($cur_post = $db->fetch_assoc($result))
 		$post_actions[] = '<li class="postquote"><span><a href="post.php?tid='.$id.'&amp;qid='.$cur_post['id'].'">'.$lang_topic['Quote'].'</a></span></li>';
 	}
 
+	// Easy BBCode mod
+	if ($pun_config['o_quickpost'] == '1' &&
+		!$pun_user['is_guest'] &&
+		($cur_topic['post_replies'] == '1' || ($cur_topic['post_replies'] == '' && $pun_user['g_post_replies'] == '1')) &&
+		($cur_topic['closed'] == '0' || $is_admmod))
+		$post_actions[] = '<li class="postquickquote"><span><a onmousedown="get_quote_text();" onclick="Quote(\''.pun_htmlspecialchars($cur_post['username']).'\', \''.pun_htmlspecialchars(mysql_escape_string($cur_post['message'])).'\'); return false;" href="post.php?tid='.$id.'&amp;qid='.$cur_post['id'].'">'.$lang_easy_bbcode['Quick quote'].'</a></span></li>';
+	//End Easy BBCode Mod
+	
+	// colorize groups
+	if ($cur_post['poster_id'] > 1 && $pun_user['g_view_users'] == '1')
+		$username = str_replace('">'.pun_htmlspecialchars($cur_post['username']).'</a>', '">'.colorize_group($cur_post['username'], $cur_post['g_id']).'</a>', $username);
+	else
+		$username = colorize_group($cur_post['username'], $cur_post['g_id']);
+	// colorize groups
+	
+	
 	// Perform the main parsing of the message (BBCode, smilies, censor words etc)
 	$cur_post['message'] = parse_message($cur_post['message'], $cur_post['hide_smilies']);
 
@@ -349,8 +488,11 @@ while ($cur_post = $db->fetch_assoc($result))
 						<dt><strong><?php echo $username ?></strong></dt>
 						<dd class="usertitle"><strong><?php echo $user_title ?></strong></dd>
 <?php if ($user_avatar != '') echo "\t\t\t\t\t\t".'<dd class="postavatar">'.$user_avatar.'</dd>'."\n"; ?>
+<?php if (strlen($user_image_award)>0) echo $user_image_award; // [Mod] Image Award added ?>
+
 <?php if (count($user_info)) echo "\t\t\t\t\t\t".implode("\n\t\t\t\t\t\t", $user_info)."\n"; ?>
 <?php if (count($user_contacts)) echo "\t\t\t\t\t\t".'<dd class="usercontacts">'.implode(' ', $user_contacts).'</dd>'."\n"; ?>
+
 					</dl>
 				</div>
 				<div class="postright">
@@ -358,6 +500,7 @@ while ($cur_post = $db->fetch_assoc($result))
 					<div class="postmsg">
 						<?php echo $cur_post['message']."\n" ?>
 <?php if ($cur_post['edited'] != '') echo "\t\t\t\t\t\t".'<p class="postedit"><em>'.$lang_topic['Last edit'].' '.pun_htmlspecialchars($cur_post['edited_by']).' ('.format_time($cur_post['edited']).')</em></p>'."\n"; ?>
+<?php if ($cur_post['id'] == $cur_topic['first_post_id']) ap_poll_display($id, $ap_current_poll) ?>					
 					</div>
 <?php if ($signature != '') echo "\t\t\t\t\t".'<div class="postsignature postmsg"><hr />'.$signature.'</div>'."\n"; ?>
 				</div>
@@ -425,12 +568,20 @@ if ($pun_user['is_guest'])
 						<label class="conl<?php echo ($pun_config['p_force_guest_email'] == '1') ? ' required' : '' ?>"><?php echo $email_label ?><br /><input type="text" name="<?php echo $email_form_name ?>" value="<?php if (isset($_POST[$email_form_name])) echo pun_htmlspecialchars($email); ?>" size="50" maxlength="80" tabindex="<?php echo $cur_index++ ?>" /><br /></label>
 						<div class="clearer"></div>
 <?php
-
+	// Easy BBCode Mod - Replace with readme step 13 to reverse
+	$bbcode_form = 'quickpostform';
+	$bbcode_field = 'req_message';
+	require PUN_ROOT.'mod_easy_bbcode.php';
 	echo "\t\t\t\t\t\t".'<label class="required"><strong>'.$lang_common['Message'].' <span>'.$lang_common['Required'].'</span></strong><br />';
 }
 else
+{
+	$bbcode_form = 'quickpostform';
+	$bbcode_field = 'req_message';
+	require PUN_ROOT.'mod_easy_bbcode.php';
 	echo "\t\t\t\t\t\t".'<label>';
-
+	
+}// End Easy BBCode Mod
 ?>
 <textarea name="req_message" rows="7" cols="75" tabindex="<?php echo $cur_index++ ?>"></textarea></label>
 						<ul class="bblinks">
@@ -442,7 +593,25 @@ else
 					</div>
 				</fieldset>
 			</div>
-			<p class="buttons"><input type="submit" name="submit" tabindex="<?php echo $cur_index++ ?>" value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_topic['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /></p>
+			<?php //[modif oto] - mod VSABR Very Simple AntiBot Registration
+if($pun_user['is_guest']) : ?>
+<div class="inform">
+	<fieldset>
+		<legend><?php	echo $lang_mod_vsabr['Robot title']	?></legend>
+		<div class="infldset">
+			<p><?php echo	$lang_mod_vsabr['Robot info']	?></p>
+			<label class="required"><strong><?php
+				 $question = array_keys($mod_vsabr_questions);
+				 $qencoded = md5($question[$mod_vsabr_index]);
+				 echo	sprintf($lang_mod_vsabr['Robot question'],$question[$mod_vsabr_index]);?>
+				 <span><?php echo	$lang_common['Required'] ?></span></strong>
+				 <input	name="captcha" id="captcha"	type="text"	size="10"	maxlength="30" /><input name="captcha_q"	value="<?php echo	$qencoded	?>"	type="hidden"	/><br	/>
+			</label>
+		</div>
+	</fieldset>
+</div>
+<?php endif; //[modif oto] - End mod VSABR ?>
+<p class="buttons"><input type="submit" name="submit" tabindex="<?php echo $cur_index++ ?>" value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_topic['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /></p>
 		</form>
 	</div>
 </div>

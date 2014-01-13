@@ -489,11 +489,11 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 		// throw away the first $start_from of $search_ids, only keep the top $per_page of $search_ids
 		$search_ids = array_slice($search_ids, $start_from, $per_page);
 
-		// Run the query and fetch the results
+		// Run the query and fetch the results - modified by colorize groups
 		if ($show_as == 'posts')
-			$result = $db->query('SELECT p.id AS pid, p.poster AS pposter, p.posted AS pposted, p.poster_id, p.message, p.hide_smilies, t.id AS tid, t.poster, t.subject, t.first_post_id, t.last_post, t.last_post_id, t.last_poster, t.num_replies, t.forum_id, f.forum_name FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id WHERE p.id IN('.implode(',', $search_ids).') ORDER BY '.$sort_by_sql.' '.$sort_dir) or error('Unable to fetch search results', __FILE__, __LINE__, $db->error());
+			$result = $db->query('SELECT u.group_id, p.id AS pid, p.poster AS pposter, p.posted AS pposted, p.poster_id, p.message, p.hide_smilies, t.id AS tid, t.poster, t.subject, t.first_post_id, t.last_post, t.last_post_id, t.last_poster, t.num_replies, t.forum_id, f.forum_name FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$db->prefix.'users AS u ON (p.poster_id=u.id) WHERE p.id IN('.implode(',', $search_ids).') ORDER BY '.$sort_by_sql.' '.$sort_dir) or error('Unable to fetch search results', __FILE__, __LINE__, $db->error());
 		else
-			$result = $db->query('SELECT t.id AS tid, t.poster, t.subject, t.last_post, t.last_post_id, t.last_poster, t.num_replies, t.closed, t.sticky, t.forum_id, f.forum_name FROM '.$db->prefix.'topics AS t INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id WHERE t.id IN('.implode(',', $search_ids).') ORDER BY '.$sort_by_sql.' '.$sort_dir) or error('Unable to fetch search results', __FILE__, __LINE__, $db->error());
+			$result = $db->query('SELECT u.id AS uid, u.group_id, up.id AS up_id, up.group_id AS up_group_id, t.id AS tid, t.poster, t.subject, t.last_post, t.last_post_id, t.last_poster, t.num_replies, t.closed, t.sticky, t.forum_id, f.forum_name FROM '.$db->prefix.'topics AS t INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$db->prefix.'users AS u ON (t.last_poster=u.username) LEFT JOIN '.$db->prefix.'users AS up ON (t.poster=up.username) WHERE t.id IN('.implode(',', $search_ids).') ORDER BY '.$sort_by_sql.' '.$sort_dir) or error('Unable to fetch search results', __FILE__, __LINE__, $db->error());
 
 		$search_set = array();
 		while ($row = $db->fetch_assoc($result))
@@ -631,7 +631,8 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 					$cur_search['message'] = censor_words($cur_search['message']);
 
 				$message = parse_message($cur_search['message'], $cur_search['hide_smilies']);
-				$pposter = pun_htmlspecialchars($cur_search['pposter']);
+				// modified by colorize groups
+				$pposter = colorize_group($cur_search['pposter'], $cur_search['group_id']);
 
 				if ($cur_search['poster_id'] > 1)
 				{
@@ -709,6 +710,15 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 				}
 				else
 					$subject_new_posts = null;
+					
+				// colorize groups
+				if (isset($cur_search['up_group_id'])) // user
+					$col_group = colorize_group($cur_search['poster'], $cur_search['up_group_id'], $cur_search['up_id']);
+				else // guest
+					$col_group = colorize_group($cur_search['poster'], PUN_GUEST);
+
+				$subject = str_replace('<span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_search['poster']).'</span>', '<span class="byuser">'.$lang_common['by'].' '.$col_group.'</span>', $subject);
+				// colorize groups
 
 				// Insert the status text before the subject
 				$subject = implode(' ', $status_text).' '.$subject;
@@ -739,8 +749,8 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 					</td>
 					<td class="tc2"><?php echo $forum ?></td>
 					<td class="tc3"><?php echo forum_number_format($cur_search['num_replies']) ?></td>
-					<td class="tcr"><?php echo '<a href="viewtopic.php?pid='.$cur_search['last_post_id'].'#p'.$cur_search['last_post_id'].'">'.format_time($cur_search['last_post']).'</a> <span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_search['last_poster']) ?></span></td>
-				</tr>
+					<!-- next line modified by colorize groups -->
+					<td class="tcr"><?php echo '<a href="viewtopic.php?pid='.$cur_search['last_post_id'].'#p'.$cur_search['last_post_id'].'">'.format_time($cur_search['last_post']).'</a> <span class="byuser">'.$lang_common['by'].' '.(isset($cur_search['group_id']) ? colorize_group($cur_search['last_poster'], $cur_search['group_id'], $cur_search['uid']) : colorize_group($cur_search['last_poster'], PUN_GUEST)) ?></span></td>				</tr>
 <?php
 
 			}
