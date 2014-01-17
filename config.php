@@ -2,9 +2,9 @@
 
 $db_type = 'mysqli';
 $db_host = 'localhost';
-$db_name = 'brad_sfbeta';
-$db_username = 'brad_sfbeta';
-$db_password = 'Nua0ylrMU7HG';
+$db_name = 'spyroforum_fluxbb_1-5-6';
+$db_username = 'root';
+$db_password = '';
 $db_prefix = '';
 $p_connect = false;
 

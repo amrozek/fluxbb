@@ -3,12 +3,12 @@
 define('PUN_CONFIG_LOADED', 1);
 
 $pun_config = array (
-  'o_cur_version' => '1.5.3',
-  'o_database_revision' => '18',
+  'o_cur_version' => '1.5.6',
+  'o_database_revision' => '20',
   'o_searchindex_revision' => '2',
   'o_parser_revision' => '2',
   'o_board_title' => 'Spyro the Dragon Forums',
-  'o_board_desc' => 'Welcome to Spyro the Dragon Forums!',
+  'o_board_desc' => '<span id="stdf_title">Spyro the Dragon Forums</span> <br /> Welcome to Spyro the Dragon Forums! <br /> <img style="border:dashed 2px #7F60B0" src="http://www.spyroforum.com/top_banner/generate.php/top_banner.jpg?ran=514754323" />',
   'o_default_timezone' => '0',
   'o_time_format' => 'H:i:s',
   'o_date_format' => 'Y-m-d',
@@ -50,7 +50,7 @@ $pun_config = array (
   'o_avatars_height' => '100',
   'o_avatars_size' => '24000',
   'o_search_all_forums' => '1',
-  'o_base_url' => 'http://beta.spyroforum.com',
+  'o_base_url' => 'http://localhost/spyroforum',
   'o_admin_email' => 'wagner.a.r@gmail.com',
   'o_webmaster_email' => 'wagner.a.r@gmail.com',
   'o_forum_subscriptions' => '1',

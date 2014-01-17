@@ -173,6 +173,11 @@ App_Data/*.ldf
 Thumbs.db
 ehthumbs.db
 
+# ignore config because database connection info
+config.php
+# ignore entire cache directory
+cache/**/*
+
 # Folder config file
 Desktop.ini
 

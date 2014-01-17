@@ -1,6 +1,6 @@
 <?php
 
-$cache_id = '3c415663ba2feb8d285339bcf1d21ce2240a8beb';
+$cache_id = '5b6e6376a583d5f3ffa2c3794dfc4d9c26bbf0cc';
 if ($cache_id != generate_stopwords_cache_id()) return;
 
 define('PUN_STOPWORDS_LOADED', 1);

@@ -47,9 +47,6 @@ if (($pun_user['g_edit_posts'] == '0' ||
 	!$is_admmod)
 	message($lang_common['No permission'], false, '403 Forbidden');
 
-if ($is_admmod && $pun_user['g_id'] != PUN_ADMIN && in_array($cur_post['poster_id'], get_admin_ids()))
-	message($lang_common['No permission'], false, '403 Forbidden');
-
 // Load the post.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/post.php';
 
@@ -59,8 +56,8 @@ $errors = array();
 
 if (isset($_POST['form_sent']))
 {
-	// Make sure they got here from the site
-	confirm_referrer('edit.php');
+	if ($is_admmod)
+		confirm_referrer('edit.php');
 
 	// If it's a topic it must contain a subject
 	if ($can_edit_subject)

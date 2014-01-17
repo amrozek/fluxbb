@@ -41,7 +41,7 @@ if (isset($_POST['add_group']) || isset($_GET['edit_group']))
 	{
 		$group_id = intval($_GET['edit_group']);
 		if ($group_id < 1 || !isset($groups[$group_id]))
-			message($lang_common['Bad request'], false, '404 Not Found');
+			message($lang_common['Bad request']);
 
 		$group = $groups[$group_id];
 
@@ -71,7 +71,7 @@ if (isset($_POST['add_group']) || isset($_GET['edit_group']))
 						<legend><?php echo $lang_admin_groups['Group settings subhead'] ?></legend>
 						<div class="infldset">
 							<p><?php echo $lang_admin_groups['Group settings info'] ?></p>
-							<table class="aligntop">
+							<table class="aligntop" cellspacing="0">
 								<tr>
 									<th scope="row"><?php echo $lang_admin_groups['Group title label'] ?></th>
 									<td>
@@ -408,11 +408,11 @@ else if (isset($_POST['set_default_group']))
 
 	// Make sure it's not the admin or guest groups
 	if ($group_id == PUN_ADMIN || $group_id == PUN_GUEST)
-		message($lang_common['Bad request'], false, '404 Not Found');
+		message($lang_common['Bad request']);
 
 	// Make sure it's not a moderator group
 	if ($groups[$group_id]['g_moderator'] != 0)
-		message($lang_common['Bad request'], false, '404 Not Found');
+		message($lang_common['Bad request']);
 
 	$db->query('UPDATE '.$db->prefix.'config SET conf_value='.$group_id.' WHERE conf_name=\'o_default_user_group\'') or error('Unable to update board config', __FILE__, __LINE__, $db->error());
 
@@ -433,7 +433,7 @@ else if (isset($_GET['del_group']))
 
 	$group_id = isset($_POST['group_to_delete']) ? intval($_POST['group_to_delete']) : intval($_GET['del_group']);
 	if ($group_id < 5)
-		message($lang_common['Bad request'], false, '404 Not Found');
+		message($lang_common['Bad request']);
 
 	// Make sure we don't remove the default group
 	if ($group_id == $pun_config['o_default_user_group'])
@@ -565,7 +565,7 @@ generate_admin_menu('groups');
 					<fieldset>
 						<legend><?php echo $lang_admin_groups['Add group subhead'] ?></legend>
 						<div class="infldset">
-							<table class="aligntop">
+							<table class="aligntop" cellspacing="0">
 								<tr>
 									<th scope="row"><?php echo $lang_admin_groups['New group label'] ?><div><input type="submit" name="add_group" value="<?php echo $lang_admin_common['Add'] ?>" tabindex="2" /></div></th>
 									<td>
@@ -596,7 +596,7 @@ foreach ($groups as $cur_group)
 					<fieldset>
 						<legend><?php echo $lang_admin_groups['Default group subhead'] ?></legend>
 						<div class="infldset">
-							<table class="aligntop">
+							<table class="aligntop" cellspacing="0">
 								<tr>
 									<th scope="row"><?php echo $lang_admin_groups['Default group label'] ?><div><input type="submit" name="set_default_group" value="<?php echo $lang_admin_common['Save'] ?>" tabindex="4" /></div></th>
 									<td>
@@ -634,7 +634,7 @@ foreach ($groups as $cur_group)
 						<legend><?php echo $lang_admin_groups['Edit groups subhead'] ?></legend>
 						<div class="infldset">
 							<p><?php echo $lang_admin_groups['Edit groups info'] ?></p>
-							<table>
+							<table cellspacing="0">
 <?php
 
 $cur_index = 5;
